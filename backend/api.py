@@ -6,7 +6,7 @@ import secrets
 import time
 from contextlib import asynccontextmanager
 from datetime import timedelta
-from typing import Literal, get_args
+from typing import Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel, Field
@@ -105,11 +105,8 @@ class Dashboard(BaseModel):
     cards: list[Card]
 
 
-AppUser = Literal["mgr", "coord"]
-
-
 class Login(BaseModel):
-    person: AppUser
+    person: Literal["mgr", "coord", "lead", "dev"]
 
 
 class NewRequest(BaseModel):
@@ -150,7 +147,7 @@ def identity(req: Request) -> str:
             "select * from sessions where token=? and expires>?",
             (req.cookies.get("hawk_session", ""), int(time.time())),
         ).fetchone()
-    if not session or session["person"] not in get_args(AppUser):
+    if not session:
         raise HTTPException(401, "Choose a demo identity.")
     if req.method != "GET":
         require_origin(req)
@@ -315,26 +312,17 @@ class Preview(BaseModel):
     rows: list[PreviewRow]
     review: str
     access_checks: dict[str, str]
-    cutoff: str
-    blocked_sources: list[str]
 
 
 @app.post("/api/watchers/{wid}/preview", response_model=Preview)
-def dry_run(wid: str, body: Config, rehearsal: bool = False, user: str = Depends(identity)):
+def dry_run(wid: str, body: Config, user: str = Depends(identity)):
     require(user, "mgr", "coord")
     with store.connection() as db:
         get(db, wid, user)
-        instant = store.now(db)
-        errors = lint(body, instant)
-    if rehearsal and os.environ.get("HAWK_CLOCK") == "wall":
-        raise HTTPException(409, "Fixture rehearsal is available in demo mode only.")
-    cutoff = CLOCK[-1] if rehearsal else instant
-    blocked: list[str] = []
+        errors = lint(body, store.now(db))
     return {
         "errors": errors,
-        "rows": [] if errors else preview(body, cutoff, blocked),
-        "cutoff": cutoff,
-        "blocked_sources": blocked,
+        "rows": [] if errors else preview(body),
         "review": review_draft(body),
         "access_checks": access_checks(body),
     }
@@ -369,7 +357,7 @@ def transition(
             if errors:
                 raise HTTPException(422, errors)
             if action == "submit":
-                preview(config, instant)
+                preview(config)
                 w["pending"]["status"] = "in review"
                 if not w["version"]:
                     w["status"] = "in review"
@@ -377,7 +365,7 @@ def transition(
                 if w["version"] and w["pending"]["status"] != "in review":
                     raise HTTPException(409, "Coordinator must submit this revision first.")
                 if not w["version"]:
-                    preview(config, instant)
+                    preview(config)
                 store.activate(w, user, instant)
         return snapshot(db, w)
 
@@ -396,7 +384,6 @@ def evidence(wid: str, mid: str, user: str = Depends(identity)):
             "source": THREADS[m["thread"]],
             "at": m["at"],
             "message_id": mid,
-            "timezone": w["config"]["timezone"],
         }
 
 

@@ -14,14 +14,12 @@ Open **http://127.0.0.1:3000**. The launcher installs dependencies, starts Next.
 
 This is a loopback-only fictional demo. Choosing a named identity simulates authentication. Use the profile link to switch roles. A live deployment needs a real identity provider and source connector before accepting real people, credentials or messages.
 
-Only the manager and coordinator can sign in. All four identities can be selected as eligible evidence authors.
-
-| Person | Workflow |
+| Demo identity | Workflow |
 |---|---|
 | Mira Vale, manager | Request a watcher, review a preview and version comparison, approve, inspect proof. Her statements in the source threads confirm access. |
-| Ellis Reed, coordinator | Preview the first draft. Operate approved watchers, investigate incidents, and prepare and submit revisions for manager approval. |
-| Rowan Lin, dev lead | Supplies access details through the source thread. Source author only. |
-| Ari Moss, developer | Posts build progress in the source thread. Source author only. |
+| Ellis Reed, coordinator | Open a pending draft, configure, preview, submit, pause/resume, investigate an incident, or prepare a revision. |
+| Rowan Lin, dev lead | Supplies access details through the source thread. |
+| Ari Moss, developer | Posts build progress in the thread. A task owner who is outside the audience sees no watcher data. |
 
 The scenario opens on **Tuesday, November 24 at 09:00 UTC** with one previously approved watcher, real fixture history, a confirmed iPhone, and a blocked Android thread. The initial approval is seeded demo history. Hawk proposes a draft. For supported requests, Hawk proposes a complete draft using the demo release threads, the dev lead as the eligible author, and a 14-day expiry for custom promises. The manager reviews and edits the proposed fields on the new watcher page. A confirmation dialog asks whether to approve the resulting draft. The coordinator operates approved watchers and prepares changes for manager approval. A weekday check is late after five minutes. A live watcher moves to Needs attention after 24 weekday hours without verified progress, excluding Saturdays and Sundays in the watcher’s configured timezone. The clock starts at approval if no progress has been recorded. Routine checks and repeat updates do not reset it.
 
@@ -45,7 +43,7 @@ Next.js App Router serves the initial board and detail using FastAPI. Browser re
 
 SQLite stores a JSON aggregate per watcher and separate session and clock tables. A write transaction serializes a check with approval and persists states, observations, source checkpoints, runs and alerts together. This suits one worker and local file reads. On a failed transaction, all changes roll back. Each version retains its observations and approver. Approval replays already witnessed messages against the revised rules. A blocked source retains its checkpoint. A successful sibling source continues progressing. Permissions to supply evidence and permissions to read a watcher are independent.
 
-The seeded mobile template keeps its original proof rules. For a custom promise, configure tracked items with one exact proof statement per item from an eligible author. The watcher completes when every configured item is confirmed. Coordinators can change source scope, eligible authors and audience, excluded phrases, confirmation strictness, named alerts, schedule, timezone, and expiry. The stricter confirmation preset starts with explicit personal test wording. Edited statements must still express current access or successful testing. The default also accepts “I'm in the Android app.” Access rules that specify the manager check the configured account, defaulting to the fictional manager login. Preview shows the cutoff and any unreadable sources. Rehearse full fixture is a demo-only replay through the final fixture timestamp. Raw fixtures contain fictional credentials. The archive, mock extractor, and browser receive safe excerpts. Code checks concrete values transiently through the read-only adapter. When a revision needs to reverify redacted evidence, code rereads only that approved source and retries after an outage.
+The seeded mobile template keeps its original proof rules. For a custom promise, configure tracked items with one exact proof statement per item from an eligible author. The watcher completes when every configured item is confirmed. Coordinators can change source scope, eligible authors and audience, excluded phrases, confirmation strictness, named alerts, schedule, timezone, and expiry. The stricter confirmation option accepts explicit personal test wording. The default also accepts “I'm in the Android app.” Demo access packets use a recognized fictional manager login. Raw fixtures contain fictional credentials. The archive, mock extractor, and browser receive safe excerpts. Code checks concrete values transiently through the read-only adapter. When a revision needs to reverify redacted evidence, code rereads only that approved source and retries after an outage.
 
 ## Fictional data and answer key
 

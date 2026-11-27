@@ -7,7 +7,6 @@ const systemChrome =
 const db = join(mkdtempSync(join(tmpdir(), "hawk-e2e-")), "test.sqlite3");
 export default defineConfig({
   testDir: "./tests",
-  metadata: { db },
   workers: 1,
   timeout: 60000,
   use: {

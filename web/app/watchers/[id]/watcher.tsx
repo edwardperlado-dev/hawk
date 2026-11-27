@@ -1,18 +1,15 @@
 "use client";
 import Link from "next/link";
-import { MissedCheck } from "../../chrome";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   type Detail,
   type Config,
   type Preview,
-  appUsers,
   people,
   roles,
   sources,
   stamp,
-  SYDNEY_TIME_ZONE,
   proofUrl,
   values,
   post,
@@ -49,7 +46,7 @@ const fields: Record<string, string> = {
   alert_on: "Alert triggers",
 };
 const sydneyDateTime = new Intl.DateTimeFormat("sv-SE", {
-  timeZone: SYDNEY_TIME_ZONE,
+  timeZone: "Australia/Sydney",
   year: "numeric",
   month: "2-digit",
   day: "2-digit",
@@ -140,11 +137,9 @@ function display(key: string, value: unknown) {
 export default function Watcher({
   initial,
   person,
-  demo,
 }: {
   initial: Detail;
   person: string;
-  demo: boolean;
 }) {
   const [trackedItems, setTrackedItems] = useState(
     Object.entries(initial.pending?.config.proof_statements || {}),
@@ -281,7 +276,7 @@ export default function Watcher({
       if (
         editable &&
         phrases === null &&
-        ["draft", "save-exit", "preview", "rehearsal", "submit", "approve"].includes(action)
+        ["draft", "save-exit", "preview", "submit", "approve"].includes(action)
       ) {
         setExcludedError(true);
         document.getElementById("not_counted")?.focus();
@@ -312,13 +307,18 @@ export default function Watcher({
                 ]),
               ),
               not_counted: phrases,
-              visible_to: Object.keys(appUsers),
+              visible_to: [
+                ...new Set([
+                  "mgr",
+                  "coord",
+                  ...(proposedConfig.visible_to || []),
+                ]),
+              ],
             }
           : proposedConfig;
       let result: Detail;
-      if ((action === "preview" || action === "rehearsal") && form) {
-        const query = action === "rehearsal" ? "?rehearsal=true" : "";
-        setPreview(await post<Preview>(base + "preview" + query, draftConfig));
+      if (action === "preview" && form) {
+        setPreview(await post<Preview>(base + "preview", draftConfig));
         return;
       }
       const token = {
@@ -459,7 +459,6 @@ export default function Watcher({
           }
         />
         {key === "expires_on" && <small>Sydney time</small>}
-        {key === "check_times" && form && <small>Schedule timezone · {form.timezone}</small>}
         {error(key)}
       </div>
     );
@@ -622,7 +621,7 @@ export default function Watcher({
                   {input("goal")}
                   {options("sources", sources)}
                   {options("people_who_count", people)}
-                  {options("visible_to", appUsers)}
+                  {options("visible_to", people)}
                   <div>
                     <label htmlFor="not_counted">{fields.not_counted}</label>
                     <input
@@ -875,7 +874,6 @@ export default function Watcher({
               )}
               <div className="buttons">
                 {(coord || manager) && button("preview", "Preview rules", true)}
-                {demo && (coord || manager) && button("rehearsal", "Rehearse full fixture", true)}
                 {editable && button("draft", "Save draft", true)}
                 {(w.version ? coord : manager) && (
                   <button
@@ -1004,10 +1002,6 @@ export default function Watcher({
                         : "Validation passed"}
                     </span>
                   </div>
-                  <p>Evidence through {stamp(preview.cutoff)}</p>
-                  {preview.blocked_sources.length > 0 && (
-                    <p>Unreadable sources: {preview.blocked_sources.map((source) => sources[source] || source).join(", ")}.</p>
-                  )}
                   {Object.keys(preview.errors).length > 0 && (
                     <ul className="preview-errors">
                       {Object.entries(preview.errors).map(([key, message]) => (
@@ -1139,36 +1133,34 @@ export default function Watcher({
           </section>
         </div>
         <aside>
-          <section className="side" aria-labelledby="watcher-health-title">
+          <section className="side">
             <div className="watcher-side-heading">
-              <h2 id="watcher-health-title">Watcher health</h2>
-              {!w.late && (
-                <span
-                  className={`badge ${Object.keys(w.incidents).length ? "amber" : ""}`}
-                >
-                  {w.status !== "live"
-                    ? watcherStatus
+              <h2>Watcher health</h2>
+              <span
+                className={`badge ${w.late || Object.keys(w.incidents).length ? "amber" : ""}`}
+              >
+                {w.status !== "live"
+                  ? watcherStatus
+                  : w.late
+                    ? "Check missed"
                     : Object.keys(w.incidents).length
                       ? "Source blocked"
                       : w.checked
                         ? "Checking"
                         : "Awaiting first check"}
-                </span>
-              )}
+              </span>
             </div>
-            {w.late && <MissedCheck scheduled={w.next_due} />}
             <dl className="watcher-health-times">
               {[
                 ["Last complete check", w.checked],
+                ["Last evidence change", w.last_change],
                 ["Next scheduled check", w.next_due],
-              ].filter(([label]) => !w.late || label !== "Next scheduled check").map(([label, instant]) => (
+              ].map(([label, instant]) => (
                 <div key={label}>
                   <dt>{label}</dt>
                   <dd>
                     {instant ? (
                       <time dateTime={instant}>{stamp(instant)}</time>
-                    ) : label === "Next scheduled check" ? (
-                      "None scheduled"
                     ) : (
                       "Not recorded"
                     )}
@@ -1176,68 +1168,55 @@ export default function Watcher({
                 </div>
               ))}
             </dl>
-            <div className="watcher-health-progress">
-              <h3>Evidence freshness</h3>
-              <small>
-                Last evidence change ·{" "}
-                {w.last_change ? (
-                  <time dateTime={w.last_change}>
-                    {stamp(w.last_change)}
-                  </time>
-                ) : (
-                  "Not recorded"
-                )}
-              </small>
-              {w.reasons
-                .filter((reason) => reason.startsWith("No verified progress"))
-                .map((reason) => (
-                  <p className="reason" key={reason}>
-                    {reason}
-                  </p>
-                ))}
-            </div>
+            {w.reasons
+              .filter((reason) => reason.startsWith("No verified progress"))
+              .map((reason) => (
+                <p className="reason" key={reason}>
+                  {reason}
+                </p>
+              ))}
+            {!!w.config?.sources?.length && (
+              <>
+                <h3 className="watcher-side-label">Source threads</h3>
+                <ul className="watcher-side-list">
+                  {w.config.sources.map((source) => {
+                    const blockedSince = w.incidents[source];
+                    const lastRead = w.checkpoints[source];
+                    return (
+                      <li key={source}>
+                        <div className="watcher-side-heading">
+                          <strong>{sources[source] || source}</strong>
+                          <span
+                            className={`badge ${blockedSince ? "amber" : ""}`}
+                          >
+                            {blockedSince
+                              ? "Blocked"
+                              : lastRead
+                                ? "Read"
+                                : "Pending"}
+                          </span>
+                        </div>
+                        {blockedSince && (
+                          <small>
+                            Blocked since{" "}
+                            <time dateTime={blockedSince}>
+                              {stamp(blockedSince)}
+                            </time>
+                          </small>
+                        )}
+                        {lastRead && (
+                          <small>
+                            Last read{" "}
+                            <time dateTime={lastRead}>{stamp(lastRead)}</time>
+                          </small>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
           </section>
-          {!!w.config?.sources?.length && (
-            <section className="side" aria-labelledby="watcher-sources-title">
-              <h2 id="watcher-sources-title">Source threads</h2>
-              <ul className="watcher-side-list watcher-source-list">
-                {w.config.sources.map((source) => {
-                  const blockedSince = w.incidents[source];
-                  const lastRead = w.checkpoints[source];
-                  return (
-                    <li key={source} data-blocked={Boolean(blockedSince)}>
-                      <div className="watcher-side-heading">
-                        <strong>{sources[source] || source}</strong>
-                        <span
-                          className={`badge ${blockedSince ? "amber" : ""}`}
-                        >
-                          {blockedSince
-                            ? "Blocked"
-                            : lastRead
-                              ? "Read"
-                              : "Pending"}
-                        </span>
-                      </div>
-                      {blockedSince && (
-                        <small>
-                          Blocked since{" "}
-                          <time dateTime={blockedSince}>
-                            {stamp(blockedSince)}
-                          </time>
-                        </small>
-                      )}
-                      {lastRead && (
-                        <small>
-                          Last successful read{" "}
-                          <time dateTime={lastRead}>{stamp(lastRead)}</time>
-                        </small>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          )}
           {coord && w.version > 0 && w.status !== "stopped" && (
             <section className="side">
               <h2>Manage watcher</h2>

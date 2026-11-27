@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Header, MissedCheck } from "./chrome";
+import { Header } from "./chrome";
 import {
   type Board,
   type Card,
@@ -17,14 +17,12 @@ import {
   people,
   roles,
   stamp,
-  formatAlert,
   proofUrl,
   post,
 } from "@/lib/data";
 
 const groups = ["Needs attention", "Watching", "Stopped"];
 function WatchCard({ w }: { w: Card }) {
-  const otherReasons = w.reasons.filter((reason) => reason !== "Scheduled check missed");
   const proof =
     w.latest?.evidence ||
     Object.values(w.states)
@@ -36,85 +34,72 @@ function WatchCard({ w }: { w: Card }) {
       className="watch-card"
       data-attention={w.group === "Needs attention"}
     >
-      <header className="watch-card-header">
-        <div className="line">
-          <span className="mono">
-            {w.id} / v{w.version}
-          </span>
-          <span
-            className={"badge " + (w.group === "Needs attention" ? "amber" : "")}
-          >
-            {w.stopped_reason || w.status}
-          </span>
-        </div>
-        <h3>
-          <Link data-focus-key={w.id + "-title"} href={"/watchers/" + w.id}>
-            {w.request}
-          </Link>
-        </h3>
-      </header>
-      {w.late && <MissedCheck scheduled={w.next_due} />}
-      {otherReasons.length > 0 && (
-        <section className="watch-attention">
-          <h4>Needs attention</h4>
-          <ul>
-            {otherReasons.map((reason) => (
-              <li key={reason}>{reason}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-      <section className="watch-progress">
-        <h4>Progress</h4>
-        <dl>
-          {Object.entries(w.states).map(([item, state]) => (
-            <div key={item}>
-              <dt>{item}</dt>
-              <dd className={state.value === "confirmed" ? "green" : ""}>
-                {values[state.value] || state.value}
-              </dd>
-            </div>
+      <div className="line">
+        <span className="mono">
+          {w.id} / v{w.version}
+        </span>
+        <span
+          className={"badge " + (w.group === "Needs attention" ? "amber" : "")}
+        >
+          {w.stopped_reason || w.status}
+        </span>
+      </div>
+      <h3>
+        <Link data-focus-key={w.id + "-title"} href={"/watchers/" + w.id}>
+          {w.request}
+        </Link>
+      </h3>
+      {w.reasons.length > 0 && (
+        <ul className="watch-attention">
+          {w.reasons.map((reason) => (
+            <li key={reason}>{reason}</li>
           ))}
-        </dl>
+        </ul>
+      )}
+      <dl className="watch-progress">
+        {Object.entries(w.states).map(([item, state]) => (
+          <div key={item}>
+            <dt>{item}</dt>
+            <dd className={state.value === "confirmed" ? "green" : ""}>
+              {values[state.value] || state.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <div className="meta watch-check">
+        {w.late && (
+          <span className="danger">Missed check · {stamp(w.next_due)}</span>
+        )}
+        <span>Last successful check · {stamp(w.checked)}</span>
+      </div>
+      <details className="watch-evidence">
+        <summary data-focus-key={w.id + "-evidence"}>
+          Recent evidence and progress
+        </summary>
+        {w.latest && <p className="change">{w.latest.message}</p>}
+        {proof && (
+          <blockquote>
+            “{proof.quote}”{" "}
+            <Link
+              data-focus-key={w.id + "-proof"}
+              href={proofUrl(w.id, proof.message_id)}
+            >
+              {people[proof.author] || proof.author} · {stamp(proof.at)} ↗
+            </Link>
+          </blockquote>
+        )}
         <small>
           Last progress · {stamp(w.last_change)}
           {w.quiet_hours != null ? ` (${w.quiet_hours}h ago)` : ""}
         </small>
-      </section>
-      {(w.latest || proof) && (
-        <section className="watch-evidence">
-          <h4>Activity and evidence</h4>
-          {w.latest && <p className="change">{formatAlert(w.latest.message)}</p>}
-          {proof && (
-            <figure>
-              <blockquote>“{proof.quote}”</blockquote>
-              <figcaption>
-                <Link
-                  data-focus-key={w.id + "-proof"}
-                  href={proofUrl(w.id, proof.message_id)}
-                >
-                  {people[proof.author] || proof.author} ·{" "}
-                  {stamp(proof.at)} ↗
-                </Link>
-              </figcaption>
-            </figure>
-          )}
-        </section>
-      )}
-      <footer className="watch-card-footer">
-        <section className="meta watch-check">
-          <h4>Check history</h4>
-          <span>Last successful check · {stamp(w.checked)}</span>
-        </section>
-        <Link
-          data-focus-key={w.id + "-open"}
-          className="action-link"
-          aria-label={"Open watcher " + w.id}
-          href={"/watchers/" + w.id}
-        >
-          Open watcher <span aria-hidden="true">↗</span>
-        </Link>
-      </footer>
+      </details>
+      <Link
+        data-focus-key={w.id + "-open"}
+        className="action-link"
+        href={"/watchers/" + w.id}
+      >
+        Open watcher <span aria-hidden="true">↗</span>
+      </Link>
     </article>
   );
 }
@@ -237,7 +222,7 @@ export default function BoardView({
             a.evidence ? proofUrl(w, a.evidence.message_id) : "/watchers/" + w
           }
         >
-          {formatAlert(a.message)}
+          {a.message}
         </Link>
       </li>
     ));

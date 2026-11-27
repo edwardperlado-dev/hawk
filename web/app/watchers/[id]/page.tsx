@@ -15,11 +15,7 @@ export default async function Page({
   return (
     <>
       <Header person={board.person} />
-      <Watcher
-        initial={watcher}
-        person={board.person}
-        demo={board.clock_mode === "demo"}
-      />
+      <Watcher initial={watcher} person={board.person} />
     </>
   );
 }

@@ -42,37 +42,23 @@ def interpret_access_proof(text: str) -> AccessEvidence | None:
     match = re.fullmatch(
         r"(?:an eligible author (?:provides|posts|supplies) |require )?"
         r"(?:an? )?(?:https )?build link(?: (?:on|from) (?P<host>[a-z0-9-]+(?:\.[a-z0-9-]+)+))?"
-        r" and (?:the )?login details(?P<manager> (?:for|intended for) the manager)?[.]?",
+        r" and (?:the )?login details(?: (?:for|intended for) the manager)?[.]?",
         " ".join(text.split()),
         re.IGNORECASE,
     )
     if not match:
         return None
-    return AccessEvidence(
-        build_host=match["host"] or "",
-        manager_account=AccessEvidence().manager_account if match["manager"] else "",
-    )
-
-
-def access_requirement(config: "Config", item: str) -> AccessEvidence | None:
-    if item not in config.access_proof:
-        return config.access_evidence.get(item, AccessEvidence())
-    requirement = interpret_access_proof(config.access_proof[item])
-    if requirement and requirement.manager_account and item in config.access_evidence:
-        requirement.manager_account = config.access_evidence[item].manager_account
-    return requirement
+    return AccessEvidence(build_host=match["host"] or "", manager_account="")
 
 
 def access_checks(config: "Config") -> dict[str, str]:
     checks = {}
-    for item in config.access_proof:
-        interpreted = access_requirement(config, item)
+    for item, text in config.access_proof.items():
+        interpreted = interpret_access_proof(text)
         if interpreted:
             host = f" on {interpreted.build_host}" if interpreted.build_host else ""
-            recipient = f" for {interpreted.manager_account}" if interpreted.manager_account else ""
             checks[item] = (
-                f"An eligible author’s message must contain an HTTPS build link{host} "
-                f"and login details{recipient}."
+                f"An eligible author’s message must contain an HTTPS build link{host} and login details."
             )
     return checks
 
@@ -105,7 +91,7 @@ class Config(BaseModel):
             statements.append(f"I'm in the {item} app.")
         return statements
 
-    @computed_field  # type: ignore[prop-decorator]
+    @computed_field
     @property
     def item_rules(self) -> dict[str, dict[str, str]]:
         """Block representation of each allowed value and its evidence rule."""
@@ -195,21 +181,14 @@ def directive(text: str) -> bool:
 
 
 def mobile_proof_is_safe(item: str, text: str) -> bool:
-    app = rf"(?:the )?{re.escape(item)}(?: app)?"
-    statement = (
-        rf"I can (?:test|access|open) {app}|"
-        rf"I(?:['’]m| am) in {app}|"
-        rf"I (?:successfully )?(?:opened|tested|accessed|got into|logged into) {app}"
-    )
-    return bool(re.fullmatch(rf"(?:{statement})[.!]?", text.strip(), re.IGNORECASE))
-
-
-def invalid_mobile_confirmation(c: Config) -> bool:
-    return c.confirmation_rule != "exact_statement" and bool(c.mobile_proof_statements) and (
-        set(c.mobile_proof_statements) != set(c.items)
-        or any(
-            not statements or any(not mobile_proof_is_safe(item, text) for text in statements)
-            for item, statements in c.mobile_proof_statements.items()
+    text = text.strip()
+    return (
+        bool(re.match(r"^I(?:\s|['’])", text, re.IGNORECASE))
+        and item.casefold() in text.casefold()
+        and safe_excerpt(text) == text
+        and not directive(text)
+        and not re.search(
+            r"\b(?:not|never|unable|cannot|can['’]t|couldn['’]t)\b|[?]", text, re.IGNORECASE
         )
     )
 
@@ -231,17 +210,7 @@ def custom_claim(item: str, text: str) -> bool:
 
 def lint(c: Config, now: str) -> dict[str, str]:
     errors = {}
-    if (
-        len(c.goal.strip().split()) < 3
-        or not re.search(
-            r"\b(?:test|access|approv\w*|ready|sign\w*|complet\w*|deliver\w*|"
-            r"publish\w*|finish\w*|finali[sz]\w*|confirm\w*|launch\w*|"
-            r"ship\w*|receiv\w*|submit\w*|upload\w*|send\w*)\b",
-            c.goal,
-            re.IGNORECASE,
-        )
-        or re.search(r"\b(?:and then|or alternatively)\b", c.goal, re.IGNORECASE)
-    ):
+    if len(c.goal.strip().split()) < 3:
         errors["goal"] = "Describe one concrete outcome that can be verified."
     if not 1 <= len(set(c.sources)) == len(c.sources) <= 3 or set(c.sources) - {"ios", "android"}:
         errors["sources"] = "Select available, distinct release threads."
@@ -249,8 +218,8 @@ def lint(c: Config, now: str) -> dict[str, str]:
         errors["people_who_count"] = "Select at least one known author who can provide proof."
     elif c.confirmation_rule != "exact_statement" and "mgr" not in c.people_who_count:
         errors["people_who_count"] = "Include the manager for mobile access confirmation."
-    if set(c.visible_to) != {"mgr", "coord"}:
-        errors["visible_to"] = "Only the manager and coordinator can view watchers."
+    if not {"mgr", "coord"} <= set(c.visible_to) or set(c.visible_to) - PEOPLE.keys():
+        errors["visible_to"] = "Include the manager and coordinator and only known identities."
     if any(not x.strip() for x in c.not_counted):
         errors["not_counted"] = "Include a specific lookalike to exclude."
     if c.confirmation_rule not in ("personal_access", "explicit_test", "exact_statement"):
@@ -289,8 +258,18 @@ def lint(c: Config, now: str) -> dict[str, str]:
             errors["items"] = "Completion requires confirmation of every tracked item."
     elif c.items != Config().items or c.done_when != Config().done_when:
         errors["items"] = "The mobile access preset requires both platforms."
-    if invalid_mobile_confirmation(c):
-        errors["items"] = "Use a first-person statement of current access or successful testing for each app."
+    if (
+        c.confirmation_rule != "exact_statement"
+        and c.mobile_proof_statements
+        and (
+            set(c.mobile_proof_statements) != set(c.items)
+            or any(
+                not statements or any(not mobile_proof_is_safe(item, text) for text in statements)
+                for item, statements in c.mobile_proof_statements.items()
+            )
+        )
+    ):
+        errors["items"] = "Provide an affirmative first-person proof statement naming each app."
     if set(c.access_evidence) - set(c.items) or any(
         not re.fullmatch(r"[a-z0-9-]+(?:\.[a-z0-9-]+)+", requirement.build_host, re.IGNORECASE)
         or not re.fullmatch(r"[\w.@+-]+", requirement.manager_account)
@@ -428,9 +407,12 @@ def decide(c: Config, m: dict, candidate: tuple[str, str, str]) -> tuple[str, st
             return value, "Manager personally confirmed access.", "manager-access"
         return "unclear", "Requires the manager’s own affirmative statement for this app.", ""
     if value == "access_details_provided":
-        required = access_requirement(c, app)
-        if required is None:
-            return "unclear", "The approved access proof wording needs review.", ""
+        if app in c.access_proof:
+            required = interpret_access_proof(c.access_proof[app])
+            if required is None:
+                return "unclear", "The approved access proof wording needs review.", ""
+        else:
+            required = c.access_evidence.get(app, AccessEvidence())
         host = re.escape(required.build_host) if required.build_host else r"[a-z0-9-]+(?:\.[a-z0-9-]+)+"
         account = re.escape(required.manager_account) if required.manager_account else r"[\w.@+-]+"
         packet = re.fullmatch(
@@ -514,16 +496,10 @@ def evaluate(c: Config, states: dict, message: dict, version: int) -> list[dict]
     return records
 
 
-def preview(c: Config, cutoff: str = CLOCK[-1], blocked: list[str] | None = None) -> list[dict]:
+def preview(c: Config) -> list[dict]:
     states = empty_states(c.items)
     output = []
-    samples = []
-    for source in c.sources:
-        try:
-            samples.extend(read(source, c, cutoff, ""))
-        except OSError:
-            if blocked is not None:
-                blocked.append(source)
+    samples = [m for src in c.sources for m in read(src, c, CLOCK[-1], "")]
     for message in sorted(samples, key=lambda m: (m["at"], m["id"])):
         if message["thread"] in c.sources:
             records = evaluate(c, states, message, 0)

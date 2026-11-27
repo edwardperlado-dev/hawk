@@ -294,16 +294,6 @@
               "type": "string",
               "title": "Wid"
             }
-          },
-          {
-            "name": "rehearsal",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": false,
-              "title": "Rehearsal"
-            }
           }
         ],
         "requestBody": {
@@ -1348,7 +1338,9 @@
             "type": "string",
             "enum": [
               "mgr",
-              "coord"
+              "coord",
+              "lead",
+              "dev"
             ],
             "title": "Person"
           }
@@ -1427,17 +1419,6 @@
             },
             "type": "object",
             "title": "Access Checks"
-          },
-          "cutoff": {
-            "type": "string",
-            "title": "Cutoff"
-          },
-          "blocked_sources": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Blocked Sources"
           }
         },
         "type": "object",
@@ -1445,9 +1426,7 @@
           "errors",
           "rows",
           "review",
-          "access_checks",
-          "cutoff",
-          "blocked_sources"
+          "access_checks"
         ],
         "title": "Preview"
       },
