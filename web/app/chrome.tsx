@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { people, roles } from "@/lib/data";
+import { people, roles, stamp } from "@/lib/data";
 export function Brand() {
   return (
     <span className="brand">
@@ -30,5 +30,19 @@ export function Header({ person }: { person: string }) {
         </Link>
       </div>
     </header>
+  );
+}
+
+
+export function MissedCheck({ scheduled }: { scheduled: string | null }) {
+  return (
+    <p className="missed-check">
+      <strong>Scheduled check missed</strong>
+      {scheduled && (
+        <span>
+          Due <time dateTime={scheduled}>{stamp(scheduled)}</time>
+        </span>
+      )}
+    </p>
   );
 }

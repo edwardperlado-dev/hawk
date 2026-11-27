@@ -14,8 +14,10 @@ from backend.rules import (
     CLOCK,
     FIXTURES,
     REQUEST,
+    AccessEvidence,
     Config,
     decide,
+    draft,
     empty_states,
     evaluate,
     lint,
@@ -40,7 +42,8 @@ def signin(client, user):
     client.headers.update({"origin": ORIGIN, "x-hawk-csrf": client.cookies["hawk_csrf"]})
 
 
-def test_fixture_answer_key():
+@pytest.mark.parametrize("config", [Config(), draft(REQUEST)])
+def test_fixture_answer_key(config):
     expected = json.loads(Path("fixtures/answer-key.json").read_text())
     states = empty_states()
     events = {}
@@ -50,8 +53,8 @@ def test_fixture_answer_key():
     )
     for message, (mid, ios, android) in zip(messages, expected, strict=True):
         assert mid == message["id"]
-        if message["thread"] in Config().sources:
-            events[mid] = [r["event"] for r in evaluate(Config(), states, message, 1)]
+        if message["thread"] in config.sources:
+            events[mid] = [r["event"] for r in evaluate(config, states, message, 1)]
         assert [states[a]["value"] for a in APPS] == [ios, android]
     assert events["05"] == [""]
     assert events["06"] == ["claim", "claim"]
@@ -100,6 +103,7 @@ def test_health_recovery_restart_and_stop(client):
     w = client.get(path).json()
     assert w["states"]["iPhone"]["value"] == "confirmed"
     assert w["incidents"] == {"android": CLOCK[3]}
+    assert "Android thread is blocked" in w["reasons"]
     client.post("/api/demo", json={"action": "miss"})
     store.tick()
     assert client.get(path).json()["late"]
@@ -147,10 +151,13 @@ def test_handoffs_stale_approval_and_acl(client):
     signin(client, "coord")
     assert client.post(path + "/submit", json=rev).status_code == 403
     assert client.post(path + "/approve", json=rev).status_code == 403
-    signin(client, "dev")
-    assert client.get(path).status_code == 404
-    assert client.get("/api/watchers/H-001/messages/08").status_code == 404
-    assert not client.get("/api/dashboard").json()["cards"]
+    for person in ("lead", "dev"):
+        assert client.post("/api/session", json={"person": person}).status_code == 422
+        with store.connection(True) as db:
+            db.execute("update sessions set person=?", (person,))
+        assert client.get(path).status_code == 401
+        assert client.get("/api/watchers/H-001/messages/08").status_code == 401
+        assert client.get("/api/dashboard").status_code == 401
 
 
 def test_pause_revision_and_expiry(client):
@@ -455,7 +462,7 @@ def test_mobile_watcher_uses_approved_item_statements():
 
 def test_mobile_access_details_use_configured_host_and_account():
     config = Config(
-        access_evidence={"Android": {"build_host": "qa.invalid", "manager_account": "qa-mira"}}
+        access_evidence={"Android": AccessEvidence(build_host="qa.invalid", manager_account="qa-mira")}
     )
     assert not lint(config, CLOCK[0])
     message = {"id": "link", "thread": "android", "author": "lead", "at": CLOCK[0]}
@@ -474,7 +481,7 @@ def test_mobile_access_details_use_configured_host_and_account():
     assert "fake" not in states["Android"]["proof"]["quote"]
 
 
-def test_generic_mobile_access_proof_requires_both_details_without_fixed_account():
+def test_mobile_access_proof_requires_manager_account():
     config = Config(**store.new("mobile", REQUEST, CLOCK[0])["pending"]["config"])
     states = empty_states(config.items)
     message = {"id": "qa", "thread": "android", "author": "lead", "at": CLOCK[0]}
@@ -482,6 +489,8 @@ def test_generic_mobile_access_proof_requires_both_details_without_fixed_account
     evaluate(config, states, {**message, "text": link_only}, 1)
     assert states["Android"]["value"] == "not_recorded"
     evaluate(config, states, {**message, "text": link_only + " Login: qa-manager / fictional"}, 1)
+    assert states["Android"]["value"] == "not_recorded"
+    evaluate(config, states, {**message, "text": link_only + " Login: fictional-mira / fictional"}, 1)
     assert states["Android"]["value"] == "access_details_provided"
 
 
@@ -496,7 +505,21 @@ def test_preview_and_worker_agree_on_interpreted_access_proof(client):
     result = client.post(path + "/preview", json=config).json()
     assert not result["errors"]
     assert "HTTPS build link on qa.example" in result["access_checks"]["Android"]
-    assert result["rows"][-2]["states"]["Android"] == "not_recorded"
+    assert result["cutoff"] == CLOCK[3]
+    assert result["blocked_sources"] == ["android"]
+    assert result["rows"] and all(row["at"] <= CLOCK[3] for row in result["rows"])
+    assert "11" not in {row["message_id"] for row in result["rows"]}
+    rehearsal = client.post(path + "/preview?rehearsal=true", json=config).json()
+    assert rehearsal["cutoff"] == CLOCK[-1]
+    assert rehearsal["blocked_sources"] == []
+    assert rehearsal["rows"][-2]["states"]["Android"] == "not_recorded"
+    client.post("/api/demo", json={"action": "advance"})
+    client.post("/api/demo", json={"action": "advance"})
+    recovered = client.post(path + "/preview", json=config).json()
+    assert recovered["cutoff"] == CLOCK[5]
+    assert not recovered["blocked_sources"]
+    assert "09" in {row["message_id"] for row in recovered["rows"]}
+    assert "11" not in {row["message_id"] for row in recovered["rows"]}
     config["access_proof"]["Android"] += " The build must be the latest."
     saved = client.post(path + "/draft", json={"number": 1, "revision": 1, "config": config}).json()
     result = client.post(path + "/preview", json=config).json()
@@ -590,3 +613,37 @@ def test_approving_revision_preserves_pause_until_coordinator_resumes(client, mo
     client.post(path + "/resume", json={"number": 2, "revision": 0}).raise_for_status()
     store.tick()
     assert calls
+
+
+@pytest.mark.parametrize("statement", [
+    "I am waiting to test Android.",
+    "I will test Android.",
+    "I can test Android if I get access.",
+    'I heard Mira say "I can test Android."',
+])
+def test_legacy_confirmation_rule_cannot_complete(statement):
+    w = store.new("legacy", REQUEST, CLOCK[0])
+    config = Config(**w["pending"]["config"])
+    config.mobile_proof_statements["Android"] = [statement]
+    assert "items" in lint(config, CLOCK[0])
+    w["pending"]["config"] = config.model_dump()
+    store.activate(w, "mgr", CLOCK[0])
+    message = {
+        "id": "waiting", "thread": "android", "author": "mgr",
+        "at": CLOCK[1], "text": statement,
+    }
+    evaluate(config, w["states"], message, 1)
+    assert w["states"]["Android"]["value"] == "not_recorded"
+    assert "Mobile confirmation rules need revision" in store.view(w, CLOCK[1])["reasons"]
+    assert not store.run(w, CLOCK[1])
+    assert w["stopped_reason"] is None
+
+
+def test_recent_activity_uses_watcher_date():
+    w = store.new("date", REQUEST, CLOCK[0])
+    w["pending"]["config"]["timezone"] = "Asia/Manila"
+    store.activate(w, "mgr", CLOCK[0])
+    store.alert(w, "done", "2026-11-23T15:59:00Z", "Before local midnight")
+    store.alert(w, "done", "2026-11-23T16:00:00Z", "After local midnight")
+    view = store.view(w, "2026-11-24T16:00:00Z")
+    assert [entry["message"] for entry in view["recent"]] == ["After local midnight"]

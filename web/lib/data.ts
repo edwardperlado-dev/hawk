@@ -13,6 +13,7 @@ export const people: Record<string, string> = {
   lead: "Rowan Lin",
   dev: "Ari Moss",
 };
+export const appUsers = { mgr: people.mgr, coord: people.coord };
 export const roles: Record<string, string> = {
   mgr: "Manager",
   coord: "Coordinator",
@@ -30,18 +31,29 @@ export const values: Record<string, string> = {
   claimed: "Claimed",
   unclear: "Unclear",
 };
+export const SYDNEY_TIME_ZONE = "Australia/Sydney";
+
+const sydneyTimestamp = new Intl.DateTimeFormat("en-AU", {
+  timeZone: SYDNEY_TIME_ZONE,
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
 export function stamp(date: string | null | undefined) {
-  if (!date) return "Not recorded";
-  return new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Australia/Sydney",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(new Date(date));
+  return date ? sydneyTimestamp.format(new Date(date)) : "Not recorded";
 }
+
+export function formatAlert(message: string) {
+  return message.replace(
+    /^Missed scheduled check at (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)\.$/,
+    (_, scheduled: string) => `Missed scheduled check at ${stamp(scheduled)}.`,
+  );
+}
+
 export function proofUrl(id: string, mid: string) {
   return (
     "/watchers/" +
