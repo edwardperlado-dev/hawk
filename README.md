@@ -75,7 +75,7 @@ Wednesday has a quiet interval. Inspect the check history to see successful chec
 
 The AI layer interprets text. This MVP uses a disclosed deterministic mock for draft suggestions, draft review, candidate extraction, and fixed-template alert wording. It has no tools or keys. The source adapter independently supplies identity and time. Code checks the proposed excerpt and full statement, applies the approved proof rule, writes history, computes completion, and decides which alerts to emit. Only the named manager approves a version. This lets the coordinator demonstrate a proposed rule change against the same evaluator that processes real checks.
 
-For a pilot, connect one read-only collaboration source and organizational sign-in, evaluate a live extractor on labeled messages, and replace the local aggregate transaction with per-watcher execution leases when external reads become slow. Revisit credential retention before enabling real source data. The first question for the manager is **“After how long without new evidence should a successfully checked promise move into Needs attention?”**
+For a pilot, connect one read-only collaboration source and organizational sign-in, evaluate a live extractor on labeled messages, and replace the local aggregate transaction with per-watcher execution leases when external reads become slow. Revisit credential retention before enabling real source data. The question I’d like the manager to answer is **“When Hawk flags a promise as needing attention, who should follow up, and what should they do first?”**
 
 ## Current limitations
 

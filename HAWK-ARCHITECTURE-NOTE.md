@@ -6,4 +6,4 @@
 
 **What I’d build next.** I’d pilot Hawk with organizational sign-in and one read-only collaboration connector. I’d run a live model in shadow mode on labeled messages and measure false confirmations, missed confirmations, and duplicate alerts separately. Those results would guide when to enable live alerts. The deterministic verifier and human approval would remain in the decision path.
 
-**What I’d ask the manager.** How long can a promise go without new verified evidence before you’d want it moved to Needs attention, assuming Hawk’s checks are succeeding?
+**The question I’d like the manager to answer.** When Hawk flags a promise as needing attention, who should follow up, and what should they do first?
