@@ -1,4 +1,16 @@
+import { execFileSync } from "node:child_process";
 import { test, expect, type Page } from "@playwright/test";
+
+test.beforeEach(({}, testInfo) => {
+  execFileSync("../scripts/reset-data", {
+    env: {
+      ...process.env,
+      HAWK_DB: testInfo.config.metadata.db,
+      HAWK_CLOCK: "demo",
+    },
+  });
+});
+
 async function login(page: Page, name: string) {
   await page.goto("/session");
   await page.getByRole("button", { name: new RegExp(name) }).click();
@@ -19,6 +31,9 @@ test("manager, coordinator and source owner complete the watch", async ({
   await expect(page.getByLabel("Outcome")).toHaveValue(
     "The Q4 annual report is ready for signature.",
   );
+  await page.getByLabel("Outcome").fill("Make things better");
+  await page.getByRole("button", { name: "Preview rules" }).click();
+  await expect(page.getByText("Changes needed", { exact: true })).toBeVisible();
   await page
     .getByLabel("Outcome")
     .fill("The final Q4 annual report is ready for signature.");
@@ -33,19 +48,30 @@ test("manager, coordinator and source owner complete the watch", async ({
     .getByRole("button", { name: "Review and approve version 1" })
     .click();
   await confirmation.getByRole("button", { name: "Confirm approval" }).click();
-  await expect(page.getByRole("status")).toContainText("Version approved");
+  await expect(
+    page.getByRole("status").filter({ hasText: "Version approved" }),
+  ).toBeVisible();
   await page.goto("/");
   const first = page.locator("article.watch-card").filter({ hasText: "H-001" });
   await expect(first).toContainText("iPhone");
   await expect(first).toContainText("Confirmed");
-  await expect(first).toContainText("android thread is blocked");
+  await expect(first).toContainText("Android thread is blocked");
+  await expect(first.locator("blockquote")).toContainText("I can test iPhone.");
+  await expect(first).toContainText("Android confirmation needed");
+  await expect(page.getByText("Hawk online", { exact: true })).toBeVisible();
   await login(page, "Ellis Reed");
   await first.getByRole("link", { name: "Open watcher" }).click();
+  await expect(
+    page.getByRole("region", { name: "Watcher health" }).getByText(
+      "25 Nov 2026, 00:00", { exact: true },
+    ),
+  ).toBeVisible();
   const duplicate = page.locator("details").filter({
     has: page.locator('a[href$="/messages/05"]'),
   });
   await duplicate.locator("summary").click();
   await expect(duplicate).toContainText("No new alert");
+  await page.goto("/watchers/H-002");
   await page.getByRole("button", { name: "Edit rules" }).click();
   await expect(
     page.getByRole("heading", { name: "Edit watcher rules" }),
@@ -54,22 +80,32 @@ test("manager, coordinator and source owner complete the watch", async ({
     page.getByRole("button", { name: "Continue editing" }),
   ).toBeVisible();
   await page
-    .getByLabel("Android confirmation statements")
-    .fill("I can test Android.");
+    .getByLabel("Outcome")
+    .fill("The revised Q4 annual report is ready for signature.");
   await page.getByRole("button", { name: "Submit for approval" }).click();
   await expect(page.getByText(/Awaiting manager approval/)).toBeVisible();
   await login(page, "Mira Vale");
-  await page.getByRole("link", { name: "H-001 · Review draft ↗" }).click();
+  await page.getByRole("link", { name: "H-002 · Review draft ↗" }).click();
   await expect(
     page.getByRole("button", { name: "Review and approve version 2" }),
   ).toBeVisible();
-  await expect(page.locator("del")).toContainText("I'm in the Android app.");
+  await expect(page.locator("del")).toContainText(
+    "The final Q4 annual report is ready for signature.",
+  );
   await page.getByRole("link", { name: "← Watchboard" }).click();
   await page.getByText("Demo controls", { exact: true }).click();
   await page.getByRole("button", { name: "Simulate missed check" }).click();
-  await expect(first).toContainText("Scheduled check missed");
+  const missedCheck = first.locator(".missed-check");
+  await expect(missedCheck).toContainText("Scheduled check missed");
+  await expect(missedCheck.locator("time")).toBeVisible();
+  await first.getByRole("link", { name: "Open watcher" }).click();
+  await expect(
+    page.getByRole("region", { name: "Watcher health" }).locator(".missed-check"),
+  ).toContainText("Scheduled check missed");
+  await page.getByRole("link", { name: "← Watchboard" }).click();
+  await page.getByText("Demo controls", { exact: true }).click();
   await page.getByRole("button", { name: "Resume worker" }).click();
-  await expect(first).not.toContainText("Scheduled check missed", {
+  await expect(missedCheck).not.toBeVisible({
     timeout: 10000,
   });
   for (let i = 0; i < 4; i++) {
@@ -93,11 +129,12 @@ test("manager, coordinator and source owner complete the watch", async ({
   await expect(page.locator("blockquote")).toContainText(
     "I'm in the Android app.",
   );
-  await login(page, "Ari Moss");
-  await expect(page.locator("article.watch-card")).toHaveCount(0);
-  expect(
-    (await page.request.get("/api/watchers/H-001/messages/11")).status(),
-  ).toBe(404);
+  await page.goto("/session");
+  await expect(page.getByRole("button", { name: /Mira Vale/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Ellis Reed/ })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Rowan Lin|Ari Moss/ }),
+  ).toHaveCount(0);
 });
 test("mobile keyboard access and stale refresh preserve evidence", async ({
   page,
@@ -110,7 +147,7 @@ test("mobile keyboard access and stale refresh preserve evidence", async ({
     page.getByRole("link", { name: "Skip to content" }),
   ).toBeFocused();
   await page.keyboard.press("Enter");
-  const card = page.locator("article.watch-card").first();
+  const card = page.locator("article.watch-card").filter({ hasText: "H-001" });
   const link = card.getByRole("link", { name: "Open watcher" });
   await link.focus();
   await page.route("**/api/dashboard", (r) => r.abort());

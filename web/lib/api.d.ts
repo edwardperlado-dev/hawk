@@ -525,7 +525,7 @@ export interface components {
              * Person
              * @enum {string}
              */
-            person: "mgr" | "coord" | "lead" | "dev";
+            person: "mgr" | "coord";
         };
         /** NewRequest */
         NewRequest: {
@@ -556,6 +556,10 @@ export interface components {
             access_checks: {
                 [key: string]: string;
             };
+            /** Cutoff */
+            cutoff: string;
+            /** Blocked Sources */
+            blocked_sources: string[];
         };
         /** PreviewRow */
         PreviewRow: {
@@ -854,7 +858,9 @@ export interface operations {
     };
     dry_run_api_watchers__wid__preview_post: {
         parameters: {
-            query?: never;
+            query?: {
+                rehearsal?: boolean;
+            };
             header?: never;
             path: {
                 wid: string;

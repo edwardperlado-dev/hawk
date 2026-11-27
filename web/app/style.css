@@ -114,7 +114,7 @@ select:focus-visible {
 .skip:focus {
   top: 0.5rem;
 }
-header,
+header:not(.watch-card-header),
 .entry-panel {
   background: #193e30;
   background-image: linear-gradient(
@@ -126,7 +126,7 @@ header,
   );
 }
 
-header {
+header:not(.watch-card-header) {
   border-bottom: 1px solid #204736;
 }
 
@@ -148,7 +148,7 @@ header .divider {
   background: #85a295;
 }
 
-header a:focus-visible {
+header:not(.watch-card-header) a:focus-visible {
   outline-color: #c9dc92;
 }
 .bar,
@@ -399,18 +399,12 @@ footer,
 .change {
   font-size: 0.9rem;
 }
-.watch-card blockquote,
 .panel blockquote {
   border-inline-start: 2px solid #8ca48c;
   padding: 0.4rem 0.8rem;
   font-family: var(--display);
   font-size: 1.17rem;
   background: #f2f4ed;
-}
-.watch-card blockquote a {
-  font: 0.76rem var(--sans);
-  display: block;
-  margin: 0.4rem 0;
 }
 .meta {
   font-size: 0.72rem;
@@ -903,9 +897,23 @@ footer {
   margin: 0.5rem 0;
 }
 
-.watcher-side-label {
-  margin-block: 1rem 0.5rem;
-  font-size: 0.95rem;
+.watcher-health-times dd {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.watcher-health-progress {
+  padding-block-start: 0.2rem;
+}
+
+.watcher-health-progress h3 {
+  margin: 0 0 0.25rem;
+  font-size: 0.85rem;
+  letter-spacing: normal;
+}
+
+.watcher-health-progress .reason {
+  margin: 0.45rem 0 0;
 }
 
 .watcher-side-list {
@@ -922,6 +930,23 @@ footer {
 
 .watcher-side-list small {
   margin-block-start: 0.2rem;
+}
+
+.watcher-source-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.watcher-source-list > li {
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  padding: 0.55rem 0.65rem;
+  background: var(--paper);
+}
+
+.watcher-source-list > li[data-blocked="true"] {
+  border-color: #dec8a0;
+  background: #fcf0d7;
 }
 
 .watcher-run-sources > div {
@@ -1040,26 +1065,62 @@ footer {
   border-color: #d8bf95;
 }
 
+.watch-card-header h3 {
+  margin-block-end: 0;
+}
+
+.watch-card h4 {
+  margin: 0;
+  font-size: 0.79rem;
+  font-weight: 700;
+}
+
+.watch-card > section,
+.watch-card-footer {
+  margin-block-start: 0.9rem;
+}
+
+.missed-check {
+  display: grid;
+  gap: 0.15rem;
+  margin-block: 0.9rem 0;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #a12b23;
+  border-inline-start-width: 4px;
+  border-radius: 0.35rem;
+  background: #fff0ec;
+  color: #74241c;
+}
+
+.missed-check > span {
+  font-size: 0.85rem;
+}
+
 .watch-attention {
   background: #fcf0d7;
   color: #634114;
-  border-radius: 0.4rem;
-  margin: 0 0 0.75rem;
-  padding: 0.55rem 0.7rem 0.55rem 1.55rem;
+  border-inline-start: 3px solid #d8bf95;
+  border-radius: 0.35rem;
+  padding: 0.65rem 0.85rem;
   font-size: 0.875rem;
-  font-weight: 600;
 }
 
-.watch-progress {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem 1.35rem;
-  margin: 0 0 0.65rem;
+.watch-attention ul {
+  margin: 0.25rem 0 0;
+  padding-inline-start: 1.1rem;
 }
 
-.watch-progress > div {
-  border: 0;
-  padding: 0;
+.watch-progress dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: 0.5rem;
+  margin: 0.4rem 0;
+}
+
+.watch-progress dl > div {
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  padding: 0.45rem 0.65rem;
 }
 
 .watch-progress dd {
@@ -1067,17 +1128,57 @@ footer {
   font-weight: 700;
 }
 
-.watch-check {
-  margin-block: 0.65rem;
+.watch-evidence {
+  border-block-start: 1px solid var(--line);
+  padding-block-start: 0.75rem;
 }
 
-.watch-evidence,
+.watch-evidence .change {
+  margin: 0.3rem 0 0;
+}
+
+.watch-evidence figure {
+  border-inline-start: 2px solid #8ca48c;
+  background: var(--paper);
+  margin: 0.45rem 0 0;
+  padding: 0.45rem 0.75rem;
+}
+
+.watch-evidence blockquote {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.1rem;
+}
+
+.watch-evidence figcaption {
+  font-size: 0.78rem;
+  margin-block-start: 0.2rem;
+}
+
+.watch-card-footer {
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding-block: 0.75rem 0;
+}
+
+.watch-check h4 {
+  color: var(--ink);
+}
+
+.watch-card-footer .action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-block-size: 1.5rem;
+  margin: 0;
+}
+
 .watch-activity-more {
-  padding-block: 0.55rem 0;
+  padding-block-start: 0.55rem;
   font-size: 0.85rem;
 }
 
-.watch-evidence[open] > summary,
 .watch-activity-more[open] > summary {
   margin-block-end: 0.5rem;
 }

@@ -17,6 +17,7 @@ from .rules import (
     draft,
     empty_states,
     evaluate,
+    invalid_mobile_confirmation,
     iso,
     next_check,
     parse,
@@ -175,7 +176,7 @@ def run(w, instant):
     if parse(instant) >= parse(c.expires_on):
         w.update(status="stopped", stopped_reason="expired", next_due=None)
         return True
-    if w["status"] != "live" or instant < w["next_due"]:
+    if w["status"] != "live" or instant < w["next_due"] or invalid_mobile_confirmation(c):
         return False
     finish_if_done(w, instant)
     if w["status"] == "stopped":
@@ -262,6 +263,12 @@ def initialize(*, reset_demo: bool = False):
             changed = redacted != archive
             if changed:
                 watcher["archive"] = redacted
+            # Bring pending drafts into line with the current account policy.
+            pending = watcher.get("pending")
+            if pending and set(pending["config"].get("visible_to", [])) & {"lead", "dev"}:
+                pending["config"]["visible_to"] = ["mgr", "coord"]
+                pending["revision"] += 1
+                changed = True
             observations = [
                 *watcher.get("history", []),
                 *(state.get("proof") for state in watcher.get("states", {}).values()),
@@ -332,6 +339,8 @@ def view(w, instant, detail=False):
     claims = [a for a in w["states"] if w["states"][a]["claim"]]
     reasons = []
     if active:
+        if invalid_mobile_confirmation(Config(**w["config"])):
+            reasons.append("Mobile confirmation rules need revision")
         activity_at = w["last_change"] or w["versions"][-1]["approved_at"]
         if weekday_elapsed(
             parse(activity_at), parse(instant), ZoneInfo(w["config"]["timezone"])
@@ -339,7 +348,8 @@ def view(w, instant, detail=False):
             reasons.append("No verified progress for 24 weekday hours")
         if late:
             reasons.append("Scheduled check missed")
-        reasons.extend(f"{s} thread is blocked" for s in w["incidents"])
+        source_names = {"ios": "iPhone", "android": "Android"}
+        reasons.extend(f"{source_names[s]} thread is blocked" for s in w["incidents"])
         reasons.extend(f"{a} confirmation needed" for a in claims)
     group = (
         "Stopped"

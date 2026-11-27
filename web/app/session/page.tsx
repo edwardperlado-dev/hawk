@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Brand } from "../chrome";
-import { people, roles, post } from "@/lib/data";
+import { appUsers, roles, post } from "@/lib/data";
 export default function Session() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -24,7 +24,7 @@ export default function Session() {
       <section className="entry-roles">
         <Brand />
         <h1>Choose a demo identity</h1>
-        {Object.entries(people).map(([id, name]) => (
+        {Object.entries(appUsers).map(([id, name]) => (
           <button
             className="person"
             disabled={busy}
