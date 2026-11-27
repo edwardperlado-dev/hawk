@@ -563,3 +563,30 @@ def test_startup_redacts_legacy_quotes_in_all_observations(client):
         == "iPhone access supplied."
     )
     assert "legacy-demo-value" not in json.dumps(result)
+
+
+def test_approving_revision_preserves_pause_until_coordinator_resumes(client, monkeypatch):
+    signin(client, "coord")
+    path = "/api/watchers/H-001"
+    client.post(path + "/pause", json={"number": 1, "revision": 0}).raise_for_status()
+    pending = client.post(path + "/revision").json()["pending"]
+    client.post(path + "/submit", json=pending).raise_for_status()
+    read = store.read
+    calls = []
+
+    def record_read(*args):
+        calls.append(args)
+        return read(*args)
+
+    monkeypatch.setattr(store, "read", record_read)
+    signin(client, "mgr")
+    approved = client.post(path + "/approve", json=pending).json()
+    assert approved["version"] == 2
+    assert approved["status"] == "paused"
+    assert approved["next_due"] is None
+    store.tick()
+    assert not calls
+    signin(client, "coord")
+    client.post(path + "/resume", json={"number": 2, "revision": 0}).raise_for_status()
+    store.tick()
+    assert calls

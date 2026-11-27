@@ -104,6 +104,7 @@ def alert(w, event, instant, message, evidence=None):
 
 
 def activate(w, user, instant):
+    paused = w["status"] == "paused"
     pending = w["pending"]
     c = Config(**pending["config"])
     w["versions"].append(
@@ -118,10 +119,10 @@ def activate(w, user, instant):
         version=pending["number"],
         config=c.model_dump(),
         pending=None,
-        status="live",
+        status="paused" if paused else "live",
         states=empty_states(c.items),
         stopped_reason=None,
-        next_due=instant,
+        next_due=None if paused else instant,
         incidents={s: t for s, t in w["incidents"].items() if s in c.sources},
         last_change=None,
         checked=None,
@@ -142,6 +143,9 @@ def activate(w, user, instant):
         }
         if not redacted_ids:
             continue
+        if paused:
+            w["checkpoints"].pop(source, None)
+            continue
         try:
             replay.extend(
                 message for message in read(source, c, instant, "") if message["id"] in redacted_ids
@@ -154,7 +158,8 @@ def activate(w, user, instant):
             w["history"].append(record)
             if record["event"] == "item_changed":
                 w["last_change"] = record["at"]
-    finish_if_done(w, instant)
+    if not paused:
+        finish_if_done(w, instant)
 
 
 def finish_if_done(w, instant):
@@ -172,6 +177,9 @@ def run(w, instant):
         return True
     if w["status"] != "live" or instant < w["next_due"]:
         return False
+    finish_if_done(w, instant)
+    if w["status"] == "stopped":
+        return True
     scheduled = w["next_due"]
     if parse(instant) - parse(scheduled) > timedelta(minutes=5):
         alert(w, "late", instant, word_alert("late", scheduled))
