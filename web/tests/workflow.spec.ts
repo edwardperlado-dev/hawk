@@ -142,6 +142,16 @@ test("mobile keyboard access and stale refresh preserve evidence", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await login(page, "Mira Vale");
   await page.goto("/");
+  const heading = page.getByRole("heading", { name: "Watchboard", exact: true });
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    const lines = await heading.evaluate((element) => {
+      const text = document.createRange();
+      text.selectNodeContents(element);
+      return text.getClientRects().length;
+    });
+    expect(lines, `Watchboard title at ${width}px`).toBe(1);
+  }
   await page.keyboard.press("Tab");
   await expect(
     page.getByRole("link", { name: "Skip to content" }),
@@ -222,4 +232,49 @@ test("leaving a draft offers to stay, save, or discard", async ({ page }) => {
   await leave.getByRole("button", { name: "Discard and exit" }).click();
   await page.waitForURL("**/");
   await expect(page.getByText(`Watcher draft ${id} discarded.`)).toBeVisible();
+});
+
+test("an expired Watchboard session offers sign-in and retains evidence", async ({ page }) => {
+  await login(page, "Mira Vale");
+  await page.route("**/api/dashboard", (route) =>
+    route.fulfill({ status: 401, json: { detail: "Choose a demo identity." } }),
+  );
+  await expect(page.getByText(/Your session expired/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "Sign in again" })).toHaveAttribute("href", "/session");
+  await expect(page.locator("article.watch-card").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create draft" })).toBeDisabled();
+});
+
+test("a stale draft can adopt the latest revision and keep local edits", async ({ page }) => {
+  await login(page, "Mira Vale");
+  await page.getByLabel("What should Hawk watch?").fill("Tell me when the checklist is approved.");
+  await page.getByRole("button", { name: "Create draft" }).click();
+  await page.waitForURL("**/watchers/H-*");
+  const url = new URL(page.url());
+  const api = "/api" + url.pathname;
+  const draft = (await (await page.request.get(api)).json()).pending;
+  const csrf = (await page.context().cookies()).find(({ name }) => name === "hawk_csrf");
+  const outcome = page.getByLabel("Outcome", { exact: true });
+  await outcome.fill("The locally revised checklist is approved.");
+  const remoteSave = await page.request.post(api + "/draft", {
+    headers: { origin: url.origin, "x-hawk-csrf": csrf!.value },
+    data: {
+      number: draft.number,
+      revision: draft.revision,
+      config: { ...draft.config, goal: "The remotely revised checklist is approved." },
+    },
+  });
+  expect(remoteSave.ok()).toBeTruthy();
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await expect(page.getByText(/The saved draft changed/)).toBeVisible();
+  await expect(outcome).toHaveValue("The locally revised checklist is approved.");
+  await page.getByRole("button", { name: "Load latest draft and keep my edits" }).click();
+  await expect(page.getByText(/Your edits are still unsaved/)).toBeVisible();
+  await expect(outcome).toHaveValue("The locally revised checklist is approved.");
+  const beforeRetry = (await (await page.request.get(api)).json()).pending.config.goal;
+  expect(beforeRetry).toBe("The remotely revised checklist is approved.");
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await expect(page.getByText("Draft saved.", { exact: true })).toBeVisible();
+  const afterRetry = (await (await page.request.get(api)).json()).pending.config.goal;
+  expect(afterRetry).toBe("The locally revised checklist is approved.");
 });

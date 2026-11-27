@@ -62,6 +62,12 @@ export function proofUrl(id: string, mid: string) {
     encodeURIComponent(mid)
   );
 }
+export class HawkRequestError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+  }
+}
+
 export async function post<T>(path: string, body: unknown): Promise<T> {
   const token =
     document.cookie
@@ -86,7 +92,10 @@ export async function post<T>(path: string, body: unknown): Promise<T> {
           : detail && typeof detail === "object"
             ? Object.values(detail).filter((entry) => typeof entry === "string")
             : [];
-    throw new Error(messages.join(" ") || `Request failed (${r.status}).`);
+    throw new HawkRequestError(
+      messages.join(" ") || `Request failed (${r.status}).`,
+      r.status,
+    );
   }
   if (data === undefined)
     throw new Error("Hawk returned an unreadable response.");

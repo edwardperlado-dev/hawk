@@ -16,6 +16,7 @@ import {
   proofUrl,
   values,
   post,
+  HawkRequestError,
 } from "@/lib/data";
 
 const alertLabels: Record<string, string> = {
@@ -153,6 +154,7 @@ export default function Watcher({
   const [excludedError, setExcludedError] = useState(false);
   const [w, setW] = useState(initial),
     [form, setForm] = useState<Config | null>(initial.pending?.config || null),
+    [draftConflict, setDraftConflict] = useState(""),
     [preview, setPreview] = useState<Preview | null>(null),
     [msg, setMsg] = useState(""),
     [toastTone, setToastTone] = useState("success"),
@@ -278,6 +280,33 @@ export default function Watcher({
           };
         })()
       : form;
+  async function loadLatestDraft() {
+    setBusy(true);
+    try {
+      const response = await fetch("/api/watchers/" + encodeURIComponent(w.id), {
+        cache: "no-store",
+      });
+      if (response.status === 404) {
+        setDraftConflict("This watcher is no longer available. Download your edits to keep a copy.");
+        return;
+      }
+      if (!response.ok) throw new Error("Could not load the latest draft.");
+      const latest: Detail = await response.json();
+      if (!latest.pending || latest.pending.number !== pending?.number || latest.status === "stopped") {
+        setDraftConflict("This draft is no longer editable. Download your edits to keep a copy.");
+        return;
+      }
+      setW(latest);
+      setPreview(null);
+      setDraftConflict("");
+      setToastTone("info");
+      setMsg("Latest draft loaded. Your edits are still unsaved.");
+    } catch {
+      setDraftConflict("Could not load the latest draft. Try again or download your edits.");
+    } finally {
+      setBusy(false);
+    }
+  }
   async function act(action: string) {
     setBusy(true);
     setMsg("");
@@ -386,6 +415,7 @@ export default function Watcher({
             : token,
         );
       setW(result);
+      setDraftConflict("");
       setForm(result.pending?.config || null);
       setExcludedText(
         formatExcludedPhrases(result.pending?.config.not_counted),
@@ -408,8 +438,18 @@ export default function Watcher({
       };
       setMsg(messages[action] || "Watcher updated.");
     } catch (e) {
-      setToastTone("failure");
-      setMsg(e instanceof Error ? e.message : "Action failed.");
+      if (
+        editable &&
+        ["draft", "save-exit", "submit", "approve"].includes(action) &&
+        e instanceof HawkRequestError &&
+        (e.status === 409 || e.status === 404)
+      ) {
+        setPreview(null);
+        setDraftConflict("The saved draft changed. Your edits are still here.");
+      } else {
+        setToastTone("failure");
+        setMsg(e instanceof Error ? e.message : "Action failed.");
+      }
     } finally {
       setBusy(false);
     }
@@ -637,6 +677,34 @@ export default function Watcher({
                     : "Review the rules Hawk proposed. Edit any details before approving."}{" "}
                   {w.version > 0 && "The approved version remains in use."}
                 </p>
+              )}
+              <div role="status">
+                {draftConflict && <p className="notice">{draftConflict}</p>}
+              </div>
+              {draftConflict && (
+                <div className="buttons">
+                  <p className="muted">
+                    Loading the latest draft keeps your edits in the editor.
+                    Saving afterward replaces the saved draft with your edits.
+                  </p>
+                  <button
+                    type="button"
+                    className="secondary"
+                    disabled={busy}
+                    onClick={loadLatestDraft}
+                  >
+                    Load latest draft and keep my edits
+                  </button>
+                  <a
+                    download={w.id + "-unsaved-draft.json"}
+                    href={
+                      "data:application/json;charset=utf-8," +
+                      encodeURIComponent(JSON.stringify({ form, trackedItems, excludedText }, null, 2))
+                    }
+                  >
+                    Download my edits
+                  </a>
+                </div>
               )}
               {editable ? (
                 <fieldset className="form-grid" disabled={busy} aria-labelledby="draft-heading">

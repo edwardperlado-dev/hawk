@@ -127,7 +127,7 @@ export default function BoardView({
 }) {
   const router = useRouter();
   const [board, setBoard] = useState(initial),
-    [failure, setFailure] = useState(""),
+    [failure, setFailure] = useState<"session" | "refresh" | null>(null),
     [loaded, setLoaded] = useState(loadedAt),
     [msg, setMsg] = useState(""),
     [toastTone, setToastTone] = useState("info"),
@@ -150,6 +150,10 @@ export default function BoardView({
     const requestId = ++sequence.current;
     try {
       const r = await fetch("/api/dashboard", { cache: "no-store" });
+      if (r.status === 401) {
+        if (requestId === sequence.current) setFailure("session");
+        return;
+      }
       if (!r.ok) throw Error();
       const next: Board = await r.json();
       if (requestId !== sequence.current) return;
@@ -157,10 +161,10 @@ export default function BoardView({
         (document.activeElement as HTMLElement | null)?.dataset.focusKey || "";
       setBoard(next);
       setLoaded(new Date().toISOString());
-      setFailure("");
+      setFailure(null);
     } catch {
       if (requestId !== sequence.current) return;
-      setFailure("Dashboard refresh failed. Showing the last loaded evidence.");
+      setFailure((current) => current === "session" ? current : "refresh");
     }
   }, []);
   const [discardToast, setDiscardToast] = useState("");
@@ -268,7 +272,15 @@ export default function BoardView({
           </div>
         </div>
         <div role="status" className={failure ? "notice" : ""}>
-          {failure} {failure && "Last refresh: " + stamp(loaded)}
+          {failure === "session" && (
+            <>
+              Your session expired. Showing the last loaded evidence.{" "}
+              <Link href="/session">Sign in again</Link>.
+            </>
+          )}
+          {failure === "refresh" &&
+            "Dashboard refresh failed. Showing the last loaded evidence."}
+          {failure && " Last refresh: " + stamp(loaded)}
         </div>
         <div className="metrics">
           {groups.map((g, i) => (
@@ -386,7 +398,7 @@ export default function BoardView({
                     onChange={(e) => setRequest(e.target.value)}
                     placeholder="Tell me when…"
                   />
-                  <button disabled={busy}>Create draft</button>
+                  <button disabled={busy || failure === "session"}>Create draft</button>
                 </form>
               </section>
             )}
@@ -404,7 +416,7 @@ export default function BoardView({
                         <button
                           key={a}
                           className="secondary"
-                          disabled={busy}
+                          disabled={busy || failure === "session"}
                           onClick={() => step(a)}
                         >
                           {
