@@ -73,6 +73,23 @@ def test_fixture_answer_key(config):
     )
 
 
+def test_preview_stops_at_completion(monkeypatch):
+    from backend import rules
+
+    read = rules.read
+
+    def read_with_later_message(source, config, cutoff, after):
+        messages = read(source, config, cutoff, after)
+        if source == "android":
+            messages.append({**messages[-1], "id": "after-completion", "at": cutoff})
+        return messages
+
+    monkeypatch.setattr(rules, "read", read_with_later_message)
+    rows = preview(draft(REQUEST))
+    assert rows[-1]["message_id"] == "11"
+    assert all(row["message_id"] != "after-completion" for row in rows)
+
+
 @pytest.mark.parametrize(
     "text,author,value,quote",
     [

@@ -13,6 +13,7 @@ from .rules import (
     CLOCK,
     REQUEST,
     Config,
+    all_confirmed,
     archive_message,
     draft,
     empty_states,
@@ -164,7 +165,7 @@ def activate(w, user, instant):
 
 
 def finish_if_done(w, instant):
-    if w["states"] and all(state["value"] == "confirmed" for state in w["states"].values()):
+    if all_confirmed(w["states"]):
         w.update(status="stopped", stopped_reason="completed", next_due=None)
         alert(w, "done", instant, word_alert("done"))
 

@@ -514,6 +514,10 @@ def evaluate(c: Config, states: dict, message: dict, version: int) -> list[dict]
     return records
 
 
+def all_confirmed(states: dict) -> bool:
+    return bool(states) and all(state["value"] == "confirmed" for state in states.values())
+
+
 def preview(c: Config, cutoff: str = CLOCK[-1], blocked: list[str] | None = None) -> list[dict]:
     states = empty_states(c.items)
     output = []
@@ -537,4 +541,6 @@ def preview(c: Config, cutoff: str = CLOCK[-1], blocked: list[str] | None = None
                     "states": {a: states[a]["value"] for a in c.items},
                 }
             )
+            if all_confirmed(states):
+                break
     return output

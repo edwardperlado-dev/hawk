@@ -17,13 +17,23 @@ async function forward(
     (process.env.HAWK_API || "http://127.0.0.1:8000") +
     "/api/" +
     path.join("/");
-  const upstream = await fetch(target, {
-    method: req.method,
-    headers,
-    body: req.method === "POST" ? await req.text() : undefined,
-    cache: "no-store",
-    redirect: "error",
-  });
+  const body = req.method === "POST" ? await req.text() : undefined;
+  let upstream: Response;
+  try {
+    upstream = await fetch(target, {
+      method: req.method,
+      headers,
+      body,
+      cache: "no-store",
+      redirect: "error",
+      signal: AbortSignal.timeout(8000),
+    });
+  } catch {
+    return Response.json(
+      { detail: "Hawk’s API is unavailable. Try again shortly." },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
+  }
   const result = new Headers({
     "Content-Type": upstream.headers.get("content-type") || "application/json",
     "Cache-Control": "no-store",

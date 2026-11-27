@@ -623,7 +623,7 @@ export default function Watcher({
                   <span className="badge promise-status">{pendingStatus}</span>
                 )}
               </div>
-              <h2 ref={draftHeading} tabIndex={-1}>
+              <h2 id="draft-heading" ref={draftHeading} tabIndex={-1}>
                 {editingRevision
                   ? "Edit watcher rules"
                   : coord
@@ -639,7 +639,7 @@ export default function Watcher({
                 </p>
               )}
               {editable ? (
-                <div className="form-grid">
+                <fieldset className="form-grid" disabled={busy} aria-labelledby="draft-heading">
                   {input("goal")}
                   {options("sources", sources)}
                   {options("people_who_count", people)}
@@ -838,7 +838,7 @@ export default function Watcher({
                   {input("check_times")}
                   {input("expires_on")}
                   {options("alert_on", alertLabels)}
-                </div>
+                </fieldset>
               ) : (
                 <dl className="block-fields">
                   {Object.entries(fields).map(([k, label]) => {

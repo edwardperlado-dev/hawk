@@ -559,8 +559,11 @@ textarea {
   display: grid;
   gap: 0.7rem;
   margin: 1rem 0;
+  min-inline-size: 0;
+  border: 0;
+  padding: 0;
 }
-fieldset {
+fieldset:not(.form-grid) {
   border: 1px solid var(--line);
   border-radius: 0.35rem;
   padding: 0.55rem 0.8rem;
@@ -856,7 +859,7 @@ footer {
   font-size: 0.875rem;
 }
 
-.watcher-block fieldset > fieldset {
+.watcher-block fieldset:not(.form-grid) > fieldset {
   margin-block: 0.75rem;
   border: 0;
   background: var(--paper);

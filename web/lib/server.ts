@@ -4,7 +4,12 @@ export async function serverGet<T>(path: string): Promise<T> {
   const jar = await cookies();
   const r = await fetch(
     (process.env.HAWK_API || "http://127.0.0.1:8000") + "/api/" + path,
-    { cache: "no-store", headers: { Cookie: jar.toString() } },
+    {
+      cache: "no-store",
+      headers: { Cookie: jar.toString() },
+      redirect: "error",
+      signal: AbortSignal.timeout(8000),
+    },
   );
   if (r.status === 401) redirect("/session");
   if (r.status === 404) notFound();
