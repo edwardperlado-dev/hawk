@@ -39,7 +39,7 @@ The source brief *How Hawk works – build brief* maps to the implementation as 
 | Pages 3–4: lifecycle and block | Immutable original request, versioned JSON rules, explicit human approval, approved audiences, persistent observations and alerts. Coordinator preview and worker share the rule engine. |
 | Pages 4–5: AI and code | Tool-free mock drafting, review and extraction. Deterministic quote, source, author, value and full-statement verification. Version and revision checks protect approval. |
 | Pages 5–6: test access | Separate app states, one incident per continuous outage, independent late-check detection, duplicate suppression, terminal completion and expiry. |
-| Pages 6–7: demo and handoff | Fixtures, executable answer key, interface and API tests, presentation walkthrough and architecture note below. |
+| Pages 6–7: demo and handoff | Fixtures, executable answer key, interface and API tests, and architecture note below. |
 
 Next.js App Router serves the initial board and detail using FastAPI. Browser requests use a same-origin API route. FastAPI owns permissions, validation, previews and approvals. TypeScript API types come from its OpenAPI schema. The read-only source adapter opens only authorized fixture files. It never logs in to a build, writes messages, or follows source text as an instruction. Source links open the exact fictional message, with a safe verbatim excerpt.
 
