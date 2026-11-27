@@ -3,6 +3,7 @@
 import json
 import re
 from datetime import UTC, datetime, time, timedelta
+from hashlib import sha256
 from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -310,10 +311,27 @@ def read(source: str, config: Config, now: str, after: str) -> list[dict]:
 
 def safe_excerpt(text: str) -> str:
     # Exact prefix from the source. Access packets keep secrets after the first sentence.
-    return re.split(r"\s+(?:Build:|Login:)|https?://", text, maxsplit=1, flags=re.IGNORECASE)[0].strip()
+    return re.split(
+        r"(?:^|\s+)(?:Build(?: link)?|Login|Username|Password):|https?://",
+        text,
+        maxsplit=1,
+        flags=re.IGNORECASE,
+    )[0].strip()
 
 
-def extract(text: str, c: Config) -> list[tuple[str, str, str]]:
+def archive_message(message: dict) -> dict:
+    excerpt = safe_excerpt(message["text"])
+    return {
+        "id": message["id"],
+        "thread": message["thread"],
+        "author": message["author"],
+        "at": message["at"],
+        "text": excerpt,
+        "redacted": message.get("redacted", False) or excerpt != message["text"].strip(),
+    }
+
+
+def extract(text: str, c: Config, *, has_access_fields: bool = False) -> list[tuple[str, str, str]]:
     """Disclosed deterministic stand-in for the tool-free text extractor."""
     if c.confirmation_rule == "exact_statement":
         candidates = []
@@ -334,7 +352,7 @@ def extract(text: str, c: Config) -> list[tuple[str, str, str]]:
     value = "unclear"
     if "both apps are done" in text.lower():
         value = "claimed"
-    elif "login:" in text.lower():
+    elif has_access_fields or re.search(r"\btest account is ready\b", text, re.IGNORECASE):
         value = "access_details_provided"
     elif re.search(r"I can test|I.m in|confirmed", text, re.IGNORECASE):
         value = "confirmed"
@@ -398,12 +416,31 @@ def decide(c: Config, m: dict, candidate: tuple[str, str, str]) -> tuple[str, st
         host = re.escape(required.build_host) if required.build_host else r"[a-z0-9-]+(?:\.[a-z0-9-]+)+"
         account = re.escape(required.manager_account) if required.manager_account else r"[\w.@+-]+"
         packet = re.fullmatch(
-            rf"{app} (?:access details supplied|test account is ready)\. Build: (https://{host}/[\w/-]+) Login: {account} / [\w-]+",
-            text,
+            rf"{re.escape(app)} (?:access details supplied|test account is ready)\.\s+"
+            rf"Build(?: link)?: (https://{host}/[\w/-]+)\s+"
+            rf"(?:Login|Username): (?P<account>{account})(?: / |\s+Password: )(?P<secret>[\w-]+)",
+            text.strip(),
             re.IGNORECASE,
         )
-        if packet:
-            return value, "Build and manager login details supplied.", packet[1]
+        if packet and not {packet["account"].casefold(), packet["secret"].casefold()} & {
+            "tbd",
+            "pending",
+            "placeholder",
+            "redacted",
+            "none",
+            "n-a",
+            "unknown",
+        }:
+            return (
+                value,
+                "Build and manager login details supplied.",
+                sha256(packet[1].encode()).hexdigest(),
+            )
+        return (
+            "unclear",
+            "The update does not supply both a qualifying build link and concrete login details.",
+            "",
+        )
     return "unclear", "This update does not meet an approved proof rule.", ""
 
 
@@ -413,7 +450,12 @@ def empty_states(items=APPS) -> dict:
 
 def evaluate(c: Config, states: dict, message: dict, version: int) -> list[dict]:
     records = []
-    for candidate in extract(message["text"], c):
+    text = message["text"]
+    excerpt = safe_excerpt(text)
+    has_access_fields = bool(
+        re.search(r"\b(?:build(?: link)?|login|username|password):", text, re.IGNORECASE)
+    )
+    for candidate in extract(excerpt, c, has_access_fields=has_access_fields):
         app, _, quote = candidate
         value, reason, key = decide(c, message, candidate)
         if app not in states:

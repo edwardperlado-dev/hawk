@@ -5,6 +5,7 @@ import os
 import sqlite3
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
+from hashlib import sha256
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -12,6 +13,7 @@ from .rules import (
     CLOCK,
     REQUEST,
     Config,
+    archive_message,
     draft,
     empty_states,
     evaluate,
@@ -19,6 +21,7 @@ from .rules import (
     next_check,
     parse,
     read,
+    safe_excerpt,
 )
 from .text_assistance import word_alert
 
@@ -125,12 +128,32 @@ def activate(w, user, instant):
     )
     # Reconsider only messages already observed, under their new rules.
     w["checkpoints"] = {s: t for s, t in w["checkpoints"].items() if s in c.sources}
-    for message in sorted(w["archive"].values(), key=lambda m: (m["at"], m["id"])):
-        if message["thread"] in c.sources:
-            for record in evaluate(c, w["states"], message, w["version"]):
-                w["history"].append(record)
-                if record["event"] == "item_changed":
-                    w["last_change"] = record["at"]
+    archived = w["archive"]
+    replay = [
+        message
+        for message in archived.values()
+        if message["thread"] in c.sources and not message.get("redacted")
+    ]
+    for source in c.sources:
+        redacted_ids = {
+            message["id"]
+            for message in archived.values()
+            if message["thread"] == source and message.get("redacted")
+        }
+        if not redacted_ids:
+            continue
+        try:
+            replay.extend(
+                message for message in read(source, c, instant, "") if message["id"] in redacted_ids
+            )
+        except OSError:
+            # Retry on the next successful check. The archive cannot reverify redacted credentials.
+            w["checkpoints"].pop(source, None)
+    for message in sorted(replay, key=lambda m: (m["at"], m["id"])):
+        for record in evaluate(c, w["states"], message, w["version"]):
+            w["history"].append(record)
+            if record["event"] == "item_changed":
+                w["last_change"] = record["at"]
     finish_if_done(w, instant)
 
 
@@ -170,7 +193,7 @@ def run(w, instant):
     for message in sorted(messages, key=lambda m: (m["at"], m["id"])):
         if message["id"] in processed:
             continue
-        w["archive"][message["id"]] = message
+        w["archive"][message["id"]] = archive_message(message)
         for record in evaluate(c, w["states"], message, w["version"]):
             w["history"].append(record)
             if record["event"]:
@@ -224,6 +247,31 @@ def initialize(*, reset_demo: bool = False):
             db.execute("delete from watchers")
             db.execute("delete from sessions")
             db.execute("delete from clock")
+        for row in db.execute("select body from watchers").fetchall():
+            watcher = json.loads(row[0])
+            archive = watcher.get("archive", {})
+            redacted = {mid: archive_message(message) for mid, message in archive.items()}
+            changed = redacted != archive
+            if changed:
+                watcher["archive"] = redacted
+            observations = [
+                *watcher.get("history", []),
+                *(state.get("proof") for state in watcher.get("states", {}).values()),
+                *(alert.get("evidence") for alert in watcher.get("alerts", [])),
+            ]
+            for observation in observations:
+                if not observation:
+                    continue
+                quote = observation.get("quote", "")
+                excerpt = safe_excerpt(quote)
+                if excerpt != quote:
+                    observation["quote"] = excerpt
+                    changed = True
+                if (key := observation.get("proof_key", "")).startswith("https://"):
+                    observation["proof_key"] = sha256(key.encode()).hexdigest()
+                    changed = True
+            if changed:
+                save(db, watcher)
         if db.execute("select count(*) from clock").fetchone()[0]:
             return
         db.execute("insert into clock values (?,0)", (CLOCK[3],))

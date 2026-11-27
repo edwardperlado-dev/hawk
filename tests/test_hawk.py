@@ -56,7 +56,14 @@ def test_fixture_answer_key():
     assert events["05"] == [""]
     assert events["06"] == ["claim", "claim"]
     assert "03" not in events
-    assert "sample-only" not in json.dumps(preview(Config()))
+    results = {row["message_id"]: row for row in preview(Config())}
+    for mid in ("02", "12", "13"):
+        assert results[mid]["states"]["Android"] == "not_recorded"
+        assert "concrete login details" in results[mid]["reason"]
+    assert results["09"]["states"]["Android"] == "access_details_provided"
+    rendered = json.dumps(results)
+    for credential in ("fictional-mira", "demo-ios-42", "demo-android-73"):
+        assert credential not in rendered
     assert (
         preview(Config(confirmation_rule="explicit_test"))[-1]["states"]["Android"]
         == "access_details_provided"
@@ -111,7 +118,8 @@ def test_health_recovery_restart_and_stop(client):
     store.initialize()
     store.tick()
     assert client.get(path).json() == result
-    assert "sample-only" not in json.dumps(result)
+    assert "demo-ios-42" not in json.dumps(result)
+    assert "demo-android-73" not in json.dumps(result)
     assert client.get(path + "/messages/03").status_code == 404
 
 
@@ -511,3 +519,47 @@ def test_dashboard_reports_worker_heartbeat_independently_of_demo_clock(client):
     with store.connection(True) as db:
         db.execute("update worker_heartbeat set reported_at=?", (CLOCK[0],))
     assert client.get("/api/dashboard").json()["worker_status"] == "overdue"
+
+
+def test_archive_and_mock_receive_safe_excerpts(client, monkeypatch):
+    from backend import rules
+
+    signer = "demo-ios-42"
+    with store.connection() as db:
+        w = store.load(db, "H-001")
+        assert w["archive"]["04"]["redacted"]
+        assert signer not in json.dumps(w)
+        assert "https://build.invalid" not in json.dumps(w)
+    extractor = rules.extract
+
+    def check_excerpt(text, config, *, has_access_fields=False):
+        assert signer not in text
+        assert "fictional-mira" not in text
+        assert "https://build.invalid" not in text
+        return extractor(text, config, has_access_fields=has_access_fields)
+
+    monkeypatch.setattr(rules, "extract", check_excerpt)
+    rows = preview(Config())
+    assert (
+        next(r for r in rows if r["message_id"] == "04")["states"]["iPhone"] == "access_details_provided"
+    )
+
+
+def test_startup_redacts_legacy_quotes_in_all_observations(client):
+    quote = "iPhone access supplied. Username: fictional-mira Password: legacy-demo-value"
+    with store.connection(True) as db:
+        watcher = store.load(db, "H-001")
+        watcher["history"][0]["quote"] = quote
+        watcher["states"]["iPhone"]["proof"]["quote"] = quote
+        next(alert for alert in watcher["alerts"] if alert["evidence"])["evidence"]["quote"] = quote
+        store.save(db, watcher)
+    store.initialize()
+    signin(client, "mgr")
+    result = client.get("/api/watchers/H-001").json()
+    assert result["history"][0]["quote"] == "iPhone access supplied."
+    assert result["states"]["iPhone"]["proof"]["quote"] == "iPhone access supplied."
+    assert (
+        next(alert for alert in result["alerts"] if alert["evidence"])["evidence"]["quote"]
+        == "iPhone access supplied."
+    )
+    assert "legacy-demo-value" not in json.dumps(result)

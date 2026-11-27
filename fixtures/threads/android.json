@@ -4,7 +4,21 @@
     "thread": "android",
     "author": "dev",
     "at": "2026-11-23T08:30:00Z",
-    "text": "Android build: https://build.invalid/a1"
+    "text": "Android build link: https://build.invalid/android/2-4-0-73"
+  },
+  {
+    "id": "12",
+    "thread": "android",
+    "author": "lead",
+    "at": "2026-11-23T08:35:00Z",
+    "text": "Android test account is ready. I’ll share the login details shortly."
+  },
+  {
+    "id": "13",
+    "thread": "android",
+    "author": "lead",
+    "at": "2026-11-23T08:40:00Z",
+    "text": "Android access details supplied.\nBuild link: https://build.invalid/android/2-4-0-73\nLogin: TBD\nPassword: pending"
   },
   {
     "id": "06",
@@ -25,7 +39,7 @@
     "thread": "android",
     "author": "lead",
     "at": "2026-11-24T10:10:00Z",
-    "text": "Android access details supplied. Build: https://build.invalid/a1 Login: fictional-mira / sample-only"
+    "text": "Android access details supplied.\nBuild link: https://build.invalid/android/2-4-0-73\nLogin: fictional-mira\nPassword: demo-android-73"
   },
   {
     "id": "10",

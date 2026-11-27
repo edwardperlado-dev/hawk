@@ -11,14 +11,14 @@
     "thread": "ios",
     "author": "lead",
     "at": "2026-11-23T11:20:00Z",
-    "text": "iPhone access details supplied. Build: https://build.invalid/i1 Login: fictional-mira / sample-only"
+    "text": "iPhone access details supplied.\nBuild link: https://build.invalid/ios/1-8-0-42\nLogin: fictional-mira\nPassword: demo-ios-42"
   },
   {
     "id": "05",
     "thread": "ios",
     "author": "lead",
     "at": "2026-11-23T12:25:00Z",
-    "text": "iPhone test account is ready. Build: https://build.invalid/i1 Login: fictional-mira / sample-only"
+    "text": "iPhone test account is ready.\nBuild link: https://build.invalid/ios/1-8-0-42\nLogin: fictional-mira\nPassword: demo-ios-42"
   },
   {
     "id": "08",

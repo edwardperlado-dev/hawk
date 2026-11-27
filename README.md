@@ -43,7 +43,7 @@ Next.js App Router serves the initial board and detail using FastAPI. Browser re
 
 SQLite stores a JSON aggregate per watcher and separate session and clock tables. A write transaction serializes a check with approval and persists states, observations, source checkpoints, runs and alerts together. This suits one worker and local file reads. On a failed transaction, all changes roll back. Each version retains its observations and approver. Approval replays already witnessed messages against the revised rules. A blocked source retains its checkpoint. A successful sibling source continues progressing. Permissions to supply evidence and permissions to read a watcher are independent.
 
-The seeded mobile template keeps its original proof rules. For a custom promise, configure tracked items with one exact proof statement per item from an eligible author. The watcher completes when every configured item is confirmed. Coordinators can change source scope, eligible authors and audience, excluded phrases, confirmation strictness, named alerts, schedule, timezone, and expiry. The stricter confirmation option accepts explicit personal test wording. The default also accepts “I'm in the Android app.” Demo access packets use a recognized fictional manager login. Raw fixtures and the local archive contain fictional credentials. Browser responses expose safe excerpts.
+The seeded mobile template keeps its original proof rules. For a custom promise, configure tracked items with one exact proof statement per item from an eligible author. The watcher completes when every configured item is confirmed. Coordinators can change source scope, eligible authors and audience, excluded phrases, confirmation strictness, named alerts, schedule, timezone, and expiry. The stricter confirmation option accepts explicit personal test wording. The default also accepts “I'm in the Android app.” Demo access packets use a recognized fictional manager login. Raw fixtures contain fictional credentials. The archive, mock extractor, and browser receive safe excerpts. Code checks concrete values transiently through the read-only adapter. When a revision needs to reverify redacted evidence, code rereads only that approved source and retries after an outage.
 
 ## Fictional data and answer key
 
@@ -55,6 +55,8 @@ Attachments, reactions, delivery receipts, real identities, external URLs and ac
 |---|---|---|---|
 | 01 | Not recorded | Not recorded | iPhone review submission is an excluded lookalike. |
 | 02 | Not recorded | Not recorded | Android build link alone. |
+| 12 | Not recorded | Not recorded | The dev lead says the test account is ready and promises to share the login later. |
+| 13 | Not recorded | Not recorded | The build link is present, but the login fields contain placeholders. |
 | 03 | Not recorded | Not recorded | Manager statement in the forbidden thread. |
 | 04 | Details supplied | Not recorded | iPhone build and manager login are supplied. |
 | 05 | Details supplied | Not recorded | Same build and account in different words. Keep the observation and suppress the repeat alert. |
