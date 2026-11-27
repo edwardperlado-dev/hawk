@@ -1,0 +1,15 @@
+.DS_Store
+.venv/
+__pycache__/
+*.sqlite3
+tmp/
+.hawk-venv/
+.hawk/
+node_modules/
+.next/
+*.tsbuildinfo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+test-results/
+playwright-report/

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "01",
+    "thread": "ios",
+    "author": "dev",
+    "at": "2026-11-23T08:15:00Z",
+    "text": "iPhone submitted for review."
+  },
+  {
+    "id": "04",
+    "thread": "ios",
+    "author": "lead",
+    "at": "2026-11-23T11:20:00Z",
+    "text": "iPhone access details supplied. Build: https://build.invalid/i1 Login: fictional-mira / sample-only"
+  },
+  {
+    "id": "05",
+    "thread": "ios",
+    "author": "lead",
+    "at": "2026-11-23T12:25:00Z",
+    "text": "iPhone test account is ready. Build: https://build.invalid/i1 Login: fictional-mira / sample-only"
+  },
+  {
+    "id": "08",
+    "thread": "ios",
+    "author": "mgr",
+    "at": "2026-11-24T08:40:00Z",
+    "text": "I can test iPhone."
+  }
+]

@@ -1,0 +1,1621 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Hawk watcher API",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/session": {
+      "post": {
+        "summary": "Login",
+        "operationId": "login_api_session_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Login"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard": {
+      "get": {
+        "summary": "Dashboard",
+        "operationId": "dashboard_api_dashboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dashboard"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/watchers": {
+      "post": {
+        "summary": "Create",
+        "operationId": "create_api_watchers_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Detail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/watchers/{wid}": {
+      "get": {
+        "summary": "Detail",
+        "operationId": "detail_api_watchers__wid__get",
+        "parameters": [
+          {
+            "name": "wid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Wid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Detail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/watchers/{wid}/revision": {
+      "post": {
+        "summary": "Revision",
+        "operationId": "revision_api_watchers__wid__revision_post",
+        "parameters": [
+          {
+            "name": "wid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Wid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Detail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/watchers/{wid}/draft": {
+      "post": {
+        "summary": "Edit Draft",
+        "operationId": "edit_draft_api_watchers__wid__draft_post",
+        "parameters": [
+          {
+            "name": "wid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Wid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Edit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Detail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/watchers/{wid}/discard": {
+      "post": {
+        "summary": "Discard Draft",
+        "operationId": "discard_draft_api_watchers__wid__discard_post",
+        "parameters": [
+          {
+            "name": "wid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Wid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Review"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Detail"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Discard Draft Api Watchers  Wid  Discard Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/watchers/{wid}/preview": {
+      "post": {
+        "summary": "Dry Run",
+        "operationId": "dry_run_api_watchers__wid__preview_post",
+        "parameters": [
+          {
+            "name": "wid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Wid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Config-Input"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Preview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/watchers/{wid}/{action}": {
+      "post": {
+        "summary": "Transition",
+        "operationId": "transition_api_watchers__wid___action__post",
+        "parameters": [
+          {
+            "name": "wid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Wid"
+            }
+          },
+          {
+            "name": "action",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "submit",
+                "approve",
+                "pause",
+                "resume"
+              ],
+              "type": "string",
+              "title": "Action"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Review"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Detail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/watchers/{wid}/messages/{mid}": {
+      "get": {
+        "summary": "Evidence",
+        "operationId": "evidence_api_watchers__wid__messages__mid__get",
+        "parameters": [
+          {
+            "name": "wid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Wid"
+            }
+          },
+          {
+            "name": "mid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/demo": {
+      "post": {
+        "summary": "Clock",
+        "operationId": "clock_api_demo_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Demo"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccessEvidence": {
+        "properties": {
+          "build_host": {
+            "type": "string",
+            "title": "Build Host",
+            "default": "build.invalid"
+          },
+          "manager_account": {
+            "type": "string",
+            "title": "Manager Account",
+            "default": "fictional-mira"
+          }
+        },
+        "type": "object",
+        "title": "AccessEvidence"
+      },
+      "Alert": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "at": {
+            "type": "string",
+            "title": "At"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Evidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "at",
+          "message",
+          "evidence",
+          "version"
+        ],
+        "title": "Alert"
+      },
+      "Card": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "request": {
+            "type": "string",
+            "title": "Request"
+          },
+          "group": {
+            "type": "string",
+            "title": "Group"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "checked": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checked"
+          },
+          "next_due": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Due"
+          },
+          "last_change": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Change"
+          },
+          "quiet_hours": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quiet Hours"
+          },
+          "stopped_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stopped Reason"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "late": {
+            "type": "boolean",
+            "title": "Late"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "has_pending": {
+            "type": "boolean",
+            "title": "Has Pending"
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Alert"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recent": {
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            },
+            "type": "array",
+            "title": "Recent"
+          },
+          "states": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/State"
+            },
+            "type": "object",
+            "title": "States"
+          },
+          "checkpoints": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Checkpoints"
+          },
+          "incidents": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Incidents"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "request",
+          "group",
+          "status",
+          "version",
+          "checked",
+          "next_due",
+          "last_change",
+          "quiet_hours",
+          "stopped_reason",
+          "reasons",
+          "late",
+          "timezone",
+          "has_pending",
+          "latest",
+          "recent",
+          "states",
+          "checkpoints",
+          "incidents"
+        ],
+        "title": "Card"
+      },
+      "Config-Input": {
+        "properties": {
+          "goal": {
+            "type": "string",
+            "title": "Goal",
+            "default": "The manager can test both iPhone and Android applications."
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "people_who_count": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "People Who Count"
+          },
+          "visible_to": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Visible To"
+          },
+          "not_counted": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Not Counted"
+          },
+          "confirmation_rule": {
+            "type": "string",
+            "title": "Confirmation Rule",
+            "default": "personal_access"
+          },
+          "check_times": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Check Times"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone",
+            "default": "UTC"
+          },
+          "expires_on": {
+            "type": "string",
+            "title": "Expires On",
+            "default": "2026-12-04T17:00:00Z"
+          },
+          "alert_on": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Alert On"
+          },
+          "items": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Items"
+          },
+          "proof_statements": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Proof Statements"
+          },
+          "access_proof": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Access Proof"
+          },
+          "access_evidence": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/AccessEvidence"
+            },
+            "type": "object",
+            "title": "Access Evidence"
+          },
+          "mobile_proof_statements": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Mobile Proof Statements"
+          },
+          "done_when": {
+            "type": "string",
+            "title": "Done When",
+            "default": "iPhone.confirmed AND Android.confirmed"
+          },
+          "stop_when": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Stop When"
+          }
+        },
+        "type": "object",
+        "title": "Config"
+      },
+      "Config-Output": {
+        "properties": {
+          "goal": {
+            "type": "string",
+            "title": "Goal",
+            "default": "The manager can test both iPhone and Android applications."
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "people_who_count": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "People Who Count"
+          },
+          "visible_to": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Visible To"
+          },
+          "not_counted": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Not Counted"
+          },
+          "confirmation_rule": {
+            "type": "string",
+            "title": "Confirmation Rule",
+            "default": "personal_access"
+          },
+          "check_times": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Check Times"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone",
+            "default": "UTC"
+          },
+          "expires_on": {
+            "type": "string",
+            "title": "Expires On",
+            "default": "2026-12-04T17:00:00Z"
+          },
+          "alert_on": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Alert On"
+          },
+          "items": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Items"
+          },
+          "proof_statements": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Proof Statements"
+          },
+          "access_proof": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Access Proof"
+          },
+          "access_evidence": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/AccessEvidence"
+            },
+            "type": "object",
+            "title": "Access Evidence"
+          },
+          "mobile_proof_statements": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Mobile Proof Statements"
+          },
+          "done_when": {
+            "type": "string",
+            "title": "Done When",
+            "default": "iPhone.confirmed AND Android.confirmed"
+          },
+          "stop_when": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Stop When"
+          },
+          "item_rules": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Item Rules",
+            "description": "Block representation of each allowed value and its evidence rule.",
+            "readOnly": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_rules"
+        ],
+        "title": "Config"
+      },
+      "Dashboard": {
+        "properties": {
+          "person": {
+            "type": "string",
+            "title": "Person"
+          },
+          "instant": {
+            "type": "string",
+            "title": "Instant"
+          },
+          "held": {
+            "type": "boolean",
+            "title": "Held"
+          },
+          "clock_mode": {
+            "type": "string",
+            "title": "Clock Mode"
+          },
+          "worker_status": {
+            "type": "string",
+            "enum": [
+              "online",
+              "paused",
+              "overdue"
+            ],
+            "title": "Worker Status"
+          },
+          "worker_reported_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worker Reported At"
+          },
+          "cards": {
+            "items": {
+              "$ref": "#/components/schemas/Card"
+            },
+            "type": "array",
+            "title": "Cards"
+          }
+        },
+        "type": "object",
+        "required": [
+          "person",
+          "instant",
+          "held",
+          "clock_mode",
+          "worker_status",
+          "worker_reported_at",
+          "cards"
+        ],
+        "title": "Dashboard"
+      },
+      "Demo": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "advance",
+              "miss",
+              "resume"
+            ],
+            "title": "Action"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "title": "Demo"
+      },
+      "Detail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "request": {
+            "type": "string",
+            "title": "Request"
+          },
+          "group": {
+            "type": "string",
+            "title": "Group"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "checked": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checked"
+          },
+          "next_due": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Due"
+          },
+          "last_change": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Change"
+          },
+          "quiet_hours": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quiet Hours"
+          },
+          "stopped_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stopped Reason"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "late": {
+            "type": "boolean",
+            "title": "Late"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone"
+          },
+          "has_pending": {
+            "type": "boolean",
+            "title": "Has Pending"
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Alert"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recent": {
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            },
+            "type": "array",
+            "title": "Recent"
+          },
+          "states": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/State"
+            },
+            "type": "object",
+            "title": "States"
+          },
+          "checkpoints": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Checkpoints"
+          },
+          "incidents": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Incidents"
+          },
+          "pending": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Pending"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "config": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Config-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/Version"
+            },
+            "type": "array",
+            "title": "Versions"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/Evidence"
+            },
+            "type": "array",
+            "title": "History"
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/Run"
+            },
+            "type": "array",
+            "title": "Runs"
+          },
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            },
+            "type": "array",
+            "title": "Alerts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "request",
+          "group",
+          "status",
+          "version",
+          "checked",
+          "next_due",
+          "last_change",
+          "quiet_hours",
+          "stopped_reason",
+          "reasons",
+          "late",
+          "timezone",
+          "has_pending",
+          "latest",
+          "recent",
+          "states",
+          "checkpoints",
+          "incidents",
+          "pending",
+          "config",
+          "versions",
+          "history",
+          "runs",
+          "alerts"
+        ],
+        "title": "Detail"
+      },
+      "Edit": {
+        "properties": {
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "config": {
+            "$ref": "#/components/schemas/Config-Input"
+          }
+        },
+        "type": "object",
+        "required": [
+          "number",
+          "revision",
+          "config"
+        ],
+        "title": "Edit"
+      },
+      "Evidence": {
+        "properties": {
+          "item": {
+            "type": "string",
+            "title": "Item"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote"
+          },
+          "at": {
+            "type": "string",
+            "title": "At"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "author": {
+            "type": "string",
+            "title": "Author"
+          },
+          "message_id": {
+            "type": "string",
+            "title": "Message Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "event": {
+            "type": "string",
+            "title": "Event"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item",
+          "value",
+          "reason",
+          "quote",
+          "at",
+          "source",
+          "author",
+          "message_id",
+          "version",
+          "event"
+        ],
+        "title": "Evidence"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Login": {
+        "properties": {
+          "person": {
+            "type": "string",
+            "enum": [
+              "mgr",
+              "coord",
+              "lead",
+              "dev"
+            ],
+            "title": "Person"
+          }
+        },
+        "type": "object",
+        "required": [
+          "person"
+        ],
+        "title": "Login"
+      },
+      "NewRequest": {
+        "properties": {
+          "request": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Request"
+          }
+        },
+        "type": "object",
+        "required": [
+          "request"
+        ],
+        "title": "NewRequest"
+      },
+      "Pending": {
+        "properties": {
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "config": {
+            "$ref": "#/components/schemas/Config-Output"
+          }
+        },
+        "type": "object",
+        "required": [
+          "number",
+          "revision",
+          "status",
+          "config"
+        ],
+        "title": "Pending"
+      },
+      "Preview": {
+        "properties": {
+          "errors": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Errors"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/PreviewRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "review": {
+            "type": "string",
+            "title": "Review"
+          },
+          "access_checks": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Access Checks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "errors",
+          "rows",
+          "review",
+          "access_checks"
+        ],
+        "title": "Preview"
+      },
+      "PreviewRow": {
+        "properties": {
+          "message_id": {
+            "type": "string",
+            "title": "Message Id"
+          },
+          "author": {
+            "type": "string",
+            "title": "Author"
+          },
+          "at": {
+            "type": "string",
+            "title": "At"
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "states": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "States"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message_id",
+          "author",
+          "at",
+          "quote",
+          "reason",
+          "states"
+        ],
+        "title": "PreviewRow"
+      },
+      "Review": {
+        "properties": {
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          }
+        },
+        "type": "object",
+        "required": [
+          "number",
+          "revision"
+        ],
+        "title": "Review"
+      },
+      "Run": {
+        "properties": {
+          "at": {
+            "type": "string",
+            "title": "At"
+          },
+          "scheduled": {
+            "type": "string",
+            "title": "Scheduled"
+          },
+          "sources": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Sources"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "at",
+          "scheduled",
+          "sources",
+          "version"
+        ],
+        "title": "Run"
+      },
+      "State": {
+        "properties": {
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "proof": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Evidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "claim": {
+            "type": "boolean",
+            "title": "Claim"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "proof",
+          "claim"
+        ],
+        "title": "State"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "Version": {
+        "properties": {
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "config": {
+            "$ref": "#/components/schemas/Config-Output"
+          },
+          "approved_by": {
+            "type": "string",
+            "title": "Approved By"
+          },
+          "approved_at": {
+            "type": "string",
+            "title": "Approved At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "number",
+          "config",
+          "approved_by",
+          "approved_at"
+        ],
+        "title": "Version"
+      }
+    }
+  }
+}

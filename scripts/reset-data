@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+if [[ "${HAWK_CLOCK:-demo}" == "wall" ]]; then
+  echo "Reset is available for the demo clock only." >&2
+  exit 1
+fi
+
+if [[ ! -x .hawk-venv/bin/python ]]; then
+  echo "Run ./scripts/start first to install Hawk's dependencies." >&2
+  exit 1
+fi
+
+.hawk-venv/bin/python -c 'from backend.store import initialize; initialize(reset_demo=True)'
+echo "Hawk demo data restored. Sign in again to continue."

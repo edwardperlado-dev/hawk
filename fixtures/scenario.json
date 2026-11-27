@@ -1,0 +1,43 @@
+{
+  "people": {
+    "mgr": {
+      "name": "Mira Vale",
+      "role": "Manager"
+    },
+    "coord": {
+      "name": "Ellis Reed",
+      "role": "Coordinator"
+    },
+    "lead": {
+      "name": "Rowan Lin",
+      "role": "Dev lead"
+    },
+    "dev": {
+      "name": "Ari Moss",
+      "role": "Developer"
+    }
+  },
+  "threads": {
+    "ios": "iPhone releases",
+    "android": "Android releases",
+    "private": "Private planning"
+  },
+  "clock": [
+    "2026-11-23T09:00:00Z",
+    "2026-11-23T13:00:00Z",
+    "2026-11-23T17:00:00Z",
+    "2026-11-24T09:00:00Z",
+    "2026-11-24T13:00:00Z",
+    "2026-11-24T17:00:00Z",
+    "2026-11-25T09:00:00Z",
+    "2026-11-25T13:00:00Z",
+    "2026-11-26T09:00:00Z"
+  ],
+  "outages": [
+    {
+      "source": "android",
+      "start": "2026-11-24T09:00:00Z",
+      "end": "2026-11-24T17:00:00Z"
+    }
+  ]
+}

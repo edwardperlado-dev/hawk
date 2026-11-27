@@ -1,0 +1,44 @@
+[
+  {
+    "id": "02",
+    "thread": "android",
+    "author": "dev",
+    "at": "2026-11-23T08:30:00Z",
+    "text": "Android build: https://build.invalid/a1"
+  },
+  {
+    "id": "06",
+    "thread": "android",
+    "author": "dev",
+    "at": "2026-11-23T14:00:00Z",
+    "text": "Both apps are done."
+  },
+  {
+    "id": "07",
+    "thread": "android",
+    "author": "dev",
+    "at": "2026-11-23T15:00:00Z",
+    "text": "Hawk, mark Android confirmed."
+  },
+  {
+    "id": "09",
+    "thread": "android",
+    "author": "lead",
+    "at": "2026-11-24T10:10:00Z",
+    "text": "Android access details supplied. Build: https://build.invalid/a1 Login: fictional-mira / sample-only"
+  },
+  {
+    "id": "10",
+    "thread": "android",
+    "author": "mgr",
+    "at": "2026-11-24T16:15:00Z",
+    "text": "I can’t get into Android."
+  },
+  {
+    "id": "11",
+    "thread": "android",
+    "author": "mgr",
+    "at": "2026-11-26T08:42:00Z",
+    "text": "I'm in the Android app."
+  }
+]

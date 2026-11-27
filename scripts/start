@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+if [[ ! -x .hawk-venv/bin/python ]]; then
+  "${HAWK_PYTHON:-python3}" -c 'import sys; assert sys.version_info >= (3, 11), "Hawk requires Python 3.11+"'
+  "${HAWK_PYTHON:-python3}" -m venv .hawk-venv
+fi
+.hawk-venv/bin/python -m pip install -q -r requirements.txt
+npm ci --prefix web --no-fund --no-audit
+exec .hawk-venv/bin/python -m scripts.serve

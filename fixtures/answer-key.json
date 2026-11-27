@@ -1,0 +1,13 @@
+[
+ ["01","not_recorded","not_recorded"],
+ ["02","not_recorded","not_recorded"],
+ ["03","not_recorded","not_recorded"],
+ ["04","access_details_provided","not_recorded"],
+ ["05","access_details_provided","not_recorded"],
+ ["06","access_details_provided","not_recorded"],
+ ["07","access_details_provided","not_recorded"],
+ ["08","confirmed","not_recorded"],
+ ["09","confirmed","access_details_provided"],
+ ["10","confirmed","access_details_provided"],
+ ["11","confirmed","confirmed"]
+]

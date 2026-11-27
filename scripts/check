@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+.hawk-venv/bin/ruff check backend tests scripts
+.hawk-venv/bin/mypy backend tests scripts
+.hawk-venv/bin/pytest -q
+.hawk-venv/bin/python -m scripts.schema --check
+generated=$(mktemp)
+trap 'rm -f "$generated"' EXIT
+web/node_modules/.bin/openapi-typescript backend/openapi.json -o "$generated"
+cmp "$generated" web/lib/api.d.ts
+npm --prefix web run lint
+npm --prefix web run build
+npm --prefix web run typecheck
+npm --prefix web run test:e2e

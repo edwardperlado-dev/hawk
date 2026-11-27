@@ -1,0 +1,30 @@
+{
+  "name": "hawk-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
+    "start": "next start",
+    "lint": "eslint app lib tests",
+    "typecheck": "tsc --noEmit",
+    "types": "openapi-typescript ../backend/openapi.json -o lib/api.d.ts",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "next": "^16.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "^16.0.0",
+    "openapi-typescript": "^7.10.0",
+    "prettier": "^3.10.1",
+    "typescript": "~5.9.0"
+  }
+}
