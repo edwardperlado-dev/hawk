@@ -509,16 +509,13 @@ def test_preview_and_worker_agree_on_interpreted_access_proof(client):
     assert result["blocked_sources"] == ["android"]
     assert result["rows"] and all(row["at"] <= CLOCK[3] for row in result["rows"])
     assert "11" not in {row["message_id"] for row in result["rows"]}
-    rehearsal = client.post(path + "/preview?rehearsal=true", json=config).json()
-    assert rehearsal["cutoff"] == CLOCK[-1]
-    assert rehearsal["blocked_sources"] == []
-    assert rehearsal["rows"][-2]["states"]["Android"] == "not_recorded"
     client.post("/api/demo", json={"action": "advance"})
     client.post("/api/demo", json={"action": "advance"})
     recovered = client.post(path + "/preview", json=config).json()
     assert recovered["cutoff"] == CLOCK[5]
     assert not recovered["blocked_sources"]
-    assert "09" in {row["message_id"] for row in recovered["rows"]}
+    access_row = next(row for row in recovered["rows"] if row["message_id"] == "09")
+    assert access_row["states"]["Android"] == "not_recorded"
     assert "11" not in {row["message_id"] for row in recovered["rows"]}
     config["access_proof"]["Android"] += " The build must be the latest."
     saved = client.post(path + "/draft", json={"number": 1, "revision": 1, "config": config}).json()

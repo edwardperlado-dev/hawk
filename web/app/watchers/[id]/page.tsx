@@ -18,7 +18,6 @@ export default async function Page({
       <Watcher
         initial={watcher}
         person={board.person}
-        demo={board.clock_mode === "demo"}
       />
     </>
   );

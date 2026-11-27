@@ -169,9 +169,17 @@ test("discard returns to Watchboard and announces the removed draft", async ({
   await login(page, "Mira Vale");
   await page
     .getByLabel("What should Hawk watch?")
-    .fill("Tell me when the checklist is approved.");
+    .fill("improve the process");
   await page.getByRole("button", { name: "Create draft" }).click();
   await page.waitForURL("**/watchers/H-*");
+  const outcome = page.getByLabel("Outcome", { exact: true });
+  await expect(outcome).toBeFocused();
+  await expect(outcome).toHaveValue("");
+  await expect(outcome).toHaveAccessibleDescription(
+    /What specific result should Hawk watch for/,
+  );
+  await outcome.fill("The revised intake checklist is approved and published.");
+  await expect(page.getByText("Hawk needs a specific outcome")).toBeVisible();
   const id = new URL(page.url()).pathname.split("/").at(-1);
   await page
     .getByRole("button", { name: "Discard draft", exact: true })

@@ -294,16 +294,6 @@
               "type": "string",
               "title": "Wid"
             }
-          },
-          {
-            "name": "rehearsal",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": false,
-              "title": "Rehearsal"
-            }
           }
         ],
         "requestBody": {

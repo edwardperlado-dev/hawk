@@ -140,11 +140,9 @@ function display(key: string, value: unknown) {
 export default function Watcher({
   initial,
   person,
-  demo,
 }: {
   initial: Detail;
   person: string;
-  demo: boolean;
 }) {
   const [trackedItems, setTrackedItems] = useState(
     Object.entries(initial.pending?.config.proof_statements || {}),
@@ -167,6 +165,7 @@ export default function Watcher({
   const router = useRouter();
   const discardDialog = useRef<HTMLDialogElement>(null);
   const leaveDialog = useRef<HTMLDialogElement>(null);
+  const outcomeInput = useRef<HTMLInputElement>(null);
   const draftHeading = useRef<HTMLHeadingElement>(null);
   const approvalDialog = useRef<HTMLDialogElement>(null);
   const coord = person === "coord",
@@ -175,6 +174,12 @@ export default function Watcher({
     pending = w.pending,
     editable =
       (w.version > 0 ? coord : manager) && form && w.status !== "stopped";
+  const needsOutcome = Boolean(
+    editable && w.version === 0 && pending && !pending.config.goal.trim(),
+  );
+  useEffect(() => {
+    if (needsOutcome) outcomeInput.current?.focus();
+  }, [needsOutcome]);
   useEffect(() => {
     if (!editable) return;
     const draftUrl = window.location.href;
@@ -281,7 +286,7 @@ export default function Watcher({
       if (
         editable &&
         phrases === null &&
-        ["draft", "save-exit", "preview", "rehearsal", "submit", "approve"].includes(action)
+        ["draft", "save-exit", "preview", "submit", "approve"].includes(action)
       ) {
         setExcludedError(true);
         document.getElementById("not_counted")?.focus();
@@ -316,9 +321,8 @@ export default function Watcher({
             }
           : proposedConfig;
       let result: Detail;
-      if ((action === "preview" || action === "rehearsal") && form) {
-        const query = action === "rehearsal" ? "?rehearsal=true" : "";
-        setPreview(await post<Preview>(base + "preview" + query, draftConfig));
+      if (action === "preview" && form) {
+        setPreview(await post<Preview>(base + "preview", draftConfig));
         return;
       }
       const token = {
@@ -425,18 +429,33 @@ export default function Watcher({
   }
   function input(key: "goal" | "expires_on" | "check_times") {
     const value = form?.[key];
+    const showOutcomePrompt = key === "goal" && needsOutcome;
+    const description = [
+      showOutcomePrompt && "outcome-help",
+      preview?.errors[key] && "err-" + key,
+    ].filter(Boolean).join(" ");
     return (
       <div key={key}>
+        {showOutcomePrompt && (
+          <div className="notice outcome-callout" id="outcome-help">
+            <strong>Hawk needs a specific outcome</strong>
+            <p>
+              What specific result should Hawk watch for? For example, “The
+              revised intake checklist is approved and published.”
+            </p>
+          </div>
+        )}
         <label htmlFor={key}>
           {fields[key]}
           {key === "check_times" ? " (HH:MM, comma-separated)" : ""}
         </label>
         <input
+          ref={showOutcomePrompt ? outcomeInput : undefined}
           id={key}
           type={key === "expires_on" ? "datetime-local" : "text"}
           step={key === "expires_on" ? 1 : undefined}
           aria-invalid={!!preview?.errors[key]}
-          aria-describedby={preview?.errors[key] ? "err-" + key : undefined}
+          aria-describedby={description || undefined}
           value={
             key === "expires_on" && typeof value === "string" && value
               ? formatExpiry(new Date(value))
@@ -611,12 +630,14 @@ export default function Watcher({
                     ? "Configure watcher"
                     : "Review watcher"}
               </h2>
-              <p className="muted">
-                {pending.status === "in review"
-                  ? "Awaiting manager approval."
-                  : "Review the rules Hawk proposed. Edit any details before approving."}{" "}
-                {w.version > 0 && "The approved version remains in use."}
-              </p>
+              {!needsOutcome && (
+                <p className="muted">
+                  {pending.status === "in review"
+                    ? "Awaiting manager approval."
+                    : "Review the rules Hawk proposed. Edit any details before approving."}{" "}
+                  {w.version > 0 && "The approved version remains in use."}
+                </p>
+              )}
               {editable ? (
                 <div className="form-grid">
                   {input("goal")}
@@ -875,7 +896,6 @@ export default function Watcher({
               )}
               <div className="buttons">
                 {(coord || manager) && button("preview", "Preview rules", true)}
-                {demo && (coord || manager) && button("rehearsal", "Rehearse full fixture", true)}
                 {editable && button("draft", "Save draft", true)}
                 {(w.version ? coord : manager) && (
                   <button

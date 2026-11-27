@@ -858,9 +858,7 @@ export interface operations {
     };
     dry_run_api_watchers__wid__preview_post: {
         parameters: {
-            query?: {
-                rehearsal?: boolean;
-            };
+            query?: never;
             header?: never;
             path: {
                 wid: string;

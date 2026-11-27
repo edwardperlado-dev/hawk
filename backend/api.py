@@ -320,20 +320,17 @@ class Preview(BaseModel):
 
 
 @app.post("/api/watchers/{wid}/preview", response_model=Preview)
-def dry_run(wid: str, body: Config, rehearsal: bool = False, user: str = Depends(identity)):
+def dry_run(wid: str, body: Config, user: str = Depends(identity)):
     require(user, "mgr", "coord")
     with store.connection() as db:
         get(db, wid, user)
         instant = store.now(db)
         errors = lint(body, instant)
-    if rehearsal and os.environ.get("HAWK_CLOCK") == "wall":
-        raise HTTPException(409, "Fixture rehearsal is available in demo mode only.")
-    cutoff = CLOCK[-1] if rehearsal else instant
     blocked: list[str] = []
     return {
         "errors": errors,
-        "rows": [] if errors else preview(body, cutoff, blocked),
-        "cutoff": cutoff,
+        "rows": [] if errors else preview(body, instant, blocked),
+        "cutoff": instant,
         "blocked_sources": blocked,
         "review": review_draft(body),
         "access_checks": access_checks(body),
